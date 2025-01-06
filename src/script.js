@@ -308,9 +308,29 @@ scene.add(camera)
 
 
 // -----------------------------------------
+// Move Obj
+const raycaster = new THREE.Raycaster()
+const mouse = new THREE.Vector2()
+const sceneObjects = []
+
+// function onMouseClick(event) {
+//   // Convert mouse click position to normalized device coordinates (-1 to +1) for raycasting
+//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
+//   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
+// }
+
+
+
+
+// -----------------------------------------
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
+controls.dampingFactor = 0.25
+controls.maxPolarAngle = Math.PI / 2
+
+// controls.attach(object)
+scene.add(controls)
 
 // -----------------------------------------
 // RENDERER
@@ -329,6 +349,10 @@ const tick = () =>
 
     // Update controls
     controls.update()
+
+    if (camera.position.y < 0) {
+      camera.position.y = 0; // Prevent going below y = 0
+  }
 
     // Render
     renderer.render(scene, camera)
