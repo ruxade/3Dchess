@@ -238,32 +238,32 @@ const modelPaths = {
 
 // Load each piece at its respective position
 
-// positions.forEach(({ model, position }) => {
-//   loadAndPositionModel(modelPaths[model], scale, position, darkMaterial);
-// })
-// Load all models once
-Object.keys(modelPaths).forEach((modelName) => {
-  loadAndStoreModel(modelPaths[modelName], modelName);
+positions.forEach(({ model, position }) => {
+  loadAndPositionModel(modelPaths[model], scale, position, darkMaterial);
 })
+// Load all models once
+// Object.keys(modelPaths).forEach((modelName) => {
+//   loadAndStoreModel(modelPaths[modelName], modelName);
+// })
 
 // clone
-const loadMirroredModels = () => {
-  const mirrorPositions = positions.map(({ model, position }) => ({
-    model,
-    position: { x: 7 - position.x, y: position.y, z: position.z }
-  }))
+// const loadMirroredModels = () => {
+//   const mirrorPositions = positions.map(({ model, position }) => ({
+//     model,
+//     position: { x: 7 - position.x, y: position.y, z: position.z }
+//   }))
 
-  // Loop through the mirrored positions and clone the models
-  mirrorPositions.forEach(({ model, position }) => {
-    const modelClone = loadedModels[model].clone() // Clone the already loaded model
-    modelClone.material = lightMaterial // Apply new material
-    modelClone.position.set(position.x, position.y, position.z) // Set mirrored position
-    scene.add(modelClone);// Add cloned object to the scene
-  });
-};
+//   // Loop through the mirrored positions and clone the models
+//   mirrorPositions.forEach(({ model, position }) => {
+//     const modelClone = loadedModels[model].clone() // Clone the already loaded model
+//     modelClone.material = lightMaterial // Apply new material
+//     modelClone.position.set(position.x, position.y, position.z) // Set mirrored position
+//     scene.add(modelClone);// Add cloned object to the scene
+//   });
+// };
 
 
-loadMirroredModels()
+// loadMirroredModels()
 
 
 
