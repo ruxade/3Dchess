@@ -3,7 +3,7 @@
 
 Welcome to my 3D Chess Game project! This is a personal project where I’m learning to build interactive 3D applications using Three.js. My goal is to combine the strategic depth of chess with the exciting visual appeal of 3D graphics to create a fun experience.
 
-♞ This project started as a design exercise a while ago as a 3D printing experiment where I designed and modeled each piece. As I worked on creating the physical models, I became obsessed with the idea of bringing them to life digitally.
+♞ This project started  a while ago, as a design exercise and 3D printing experiment where I designed and modeled each piece. As I worked on improving the physical models, I became obsessed with the idea of bringing them to life digitally.
 
 I hope you enjoy it! 🙂
 
