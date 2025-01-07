@@ -160,6 +160,8 @@ const darkTexture = textureLoader.load('/textures/matcaps/23.png')
 const lightTexture = textureLoader.load('/textures/matcaps/16.png')
 const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
 
+const backgroundTexture = textureLoader.load('/textures/matcaps/6.png')
+
 boardTexture.repeat.x = 8
 boardTexture.repeat.y = 8
 boardTexture.wrapS = THREE.MirroredRepeatWrapping
@@ -168,6 +170,8 @@ boardTexture.offset.set(0.5, 0.5)
 darkTexture.magFilter  =THREE.NearestFilter
 boardTexture.magFilter  =THREE.NearestFilter
 
+
+const textureMaterial = new THREE.MeshMatcapMaterial({ matcap: backgroundTexture})
 
 const darkMaterial = new THREE.MeshMatcapMaterial({
   matcap: darkTexture,
@@ -183,6 +187,11 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
 
 const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
+const backgroundGeometry = new THREE.SphereGeometry(50, 64, 64); // A large sphere
+const backgroundMesh = new THREE.Mesh(backgroundGeometry, textureMaterial)
+backgroundGeometry.scale(-1, 1, 1)
+backgroundMesh.position.set(0, 0, 0)
+scene.add(backgroundMesh)
 
 // FLOOR
 
@@ -446,7 +455,7 @@ function onMouseMove(event) {
   // If dragging, update the position of the selected object
   if (selectedObject) {
       raycaster.setFromCamera(mouse, camera)
-      const planeIntersect = raycaster.intersectObject(board)[0]
+      const planeIntersect = raycaster.intersectObject(floor)[0]
       if (planeIntersect) {
           selectedObject.position.x = planeIntersect.point.x + dragOffset.x
           selectedObject.position.z = planeIntersect.point.z + dragOffset.z
@@ -468,7 +477,7 @@ function onMouseDown(event) {
 
           // Calculate offset to keep piece aligned while dragging
           raycaster.setFromCamera(mouse, camera)
-          const planeIntersect = raycaster.intersectObject(floor)[0]
+          const planeIntersect = raycaster.intersectObject(floor)[0];
           if (planeIntersect) {
               dragOffset.set(
                   selectedObject.position.x - planeIntersect.point.x,
