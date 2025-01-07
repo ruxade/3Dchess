@@ -17,3 +17,10 @@ body{
     left: 0;
     outline: none;
 }
+
+.dg .ac {
+  background: #333 ;
+  color: #b41b1b;
+  font-family: Arial, sans-serif;
+  border: 1px solid #555;
+}

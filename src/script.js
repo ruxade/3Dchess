@@ -5,7 +5,9 @@ import gsap from 'gsap'
 import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
-
+import { fog } from 'three/src/nodes/TSL.js'
+import  CANNON  from "cannon"
+import { DragControls } from 'three/examples/jsm/controls/DragControls.js'
 
 // -----------------------------------------
 
@@ -16,13 +18,14 @@ const canvas = document.querySelector('canvas.webgl')
 const scene = new THREE.Scene()
 
 // AXIS HELPER
-const axesHelper = new THREE.AxesHelper(3)
-scene.add(axesHelper)
+// const axesHelper = new THREE.AxesHelper(3)
+// scene.add(axesHelper)
 
 // DEBUG
 const gui = new dat.GUI({
   // closed: true,
-  width: 400
+  // width: 400
+  // color: 'white'
 })
 
 // CURSOR
@@ -60,16 +63,53 @@ window.addEventListener('resize', () =>
 
 // ----------------------------------------------------------------------------------
 
+// FOG
+// const fog  = new THREE.Fog( '00ffff', 15, 25) //color, near, far
+// scene.fog = fog
+const fogSettings = {
+  color: 0xcac0e5,
+  density: 0.03 // Initial density value
+}
+const fog1 = new THREE.FogExp2( fogSettings.color, fogSettings.density )
+scene.fog = fog1
+
+
+// gui.add(fogSettings.density, 0, 1, 0.01).onChange((value) => {
+//   fog.density = value // Update the fog density dynamically
+// })
+gui
+    .add(fogSettings, 'density', 0, 0.15, 0.01)
+    .onChange( (value) => {
+      fog1.density = value
+    })
+gui
+    .addColor(fogSettings, 'color')
+    .onChange( () => {
+      fog1.color.set(fogSettings.color)
+    })
+
+
 // LIGHTS
-const light = new THREE.AmbientLight(0xffffff, 0.5) // Color, intensity
-scene.add(light)
+// const ambientLight = new THREE.AmbientLight(0xffffff, 0.5) // Color, intensity
+// gui.add(ambientLight, 'intensity').min(0).max(1).step(0.1)
+// scene.add(ambientLight)
 
-const pointLight = new THREE.PointLight(0xffffff, 10, 100); // Color, intensity, distance
-pointLight.position.set(5, 5, 5)
-scene.add(pointLight)
+// const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
+// directionalLight.position.set(4, 4, 0)
 
-const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGHT HELPER
-// scene.add(pointLightHelper);
+// gui.add(directionalLight, 'intensity').min(0).max(1).step(0.1)
+
+// scene.add(directionalLight)
+
+// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 1)
+// scene.add(directionalLightHelper)
+
+// const pointLight = new THREE.PointLight(0xffffff, 10, 100); // Color, intensity, distance
+// pointLight.position.set(5, 5, 5)
+// scene.add(pointLight)
+
+// const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGHT HELPER
+// scene.add(pointLightHelper)
 
 // ----------------------------------------------------------------------------------
 
@@ -174,9 +214,8 @@ const darkMaterial = new THREE.MeshMatcapMaterial({
   matcap: darkTexture,
   // side: THREE.FrontSide,  // Set the side to render
   flatShading: false,     //  enables flat shading for a more stylized look
-  flatShading: false,
-  roughness: 0.8,
-  metalness: 0.1
+  // roughness: 0.8,
+  // metalness: 0.1
 
 })
 
@@ -196,8 +235,8 @@ const sphereCenter = new THREE.Vector3(0, 0, 0)
 const backgroundMaterial = new THREE.MeshMatcapMaterial({
   matcap: backgroundTexture,
   flatShading: false,
-  roughness: 0.9,
-  metalness: 0.1
+  // roughness: 0.9,
+  // metalness: 0.1
 })
 // const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
@@ -291,6 +330,8 @@ const modelPaths = {
 }
 
 const meshGroup = new THREE.Group()
+scene.add(meshGroup)
+
 const loadedModels = {}
 
 const loadModel = (modelName, modelPath, onComplete) => {
@@ -304,6 +345,8 @@ const loadModel = (modelName, modelPath, onComplete) => {
         }
       })
       loadedModels[modelName] = object
+
+
       if (onComplete) onComplete()
     },
     undefined,
@@ -316,6 +359,7 @@ const loadModel = (modelName, modelPath, onComplete) => {
 //  clone and position models
 const addPieceToScene = (modelName, position, material, rotate = false) => {
   const modelClone = loadedModels[modelName].clone()
+
   modelClone.traverse((child) => {
     if (child.isMesh) {
       child.material = material
@@ -329,7 +373,13 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
     modelClone.rotation.z = Math.PI
   }
   scene.add(modelClone)
+
+    // Create the physics body for the piece
+    const piecePhysicsBody = createPiecePhysics(modelClone, position)
+
+  meshGroup.add(modelClone)
 }
+
 
 const scale = 0.02
 
@@ -376,6 +426,7 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
         position.z = centeredPosition(position.z)
 
         addPieceToScene(model, position, darkMaterial, false)
+
       })
 
 
@@ -392,6 +443,10 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
 })
 
 
+
+console.log( meshGroup)
+// console.log(loadedModels)
+// console.log(Object.keys(loadedModels).length)
 
 // BOUNDING BOX- ?
 
@@ -443,9 +498,9 @@ scene.add(camera)
 const helper = new THREE.CameraHelper( camera )
 // scene.add( helper )
 
-gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Position X')
-gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
-gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('Position Z')
+gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Camera X')
+// gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
+gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('camera Z')
 
 
 
@@ -477,72 +532,72 @@ function constrainCamera() {
 
 // gui.add(parameters, 'spin')
 
-
-// ----------------------------------------------------------------------------------
+// SS----------------------------------------------------------------------------------
 // Move Obj
-const raycaster = new THREE.Raycaster()
-const mouse = new THREE.Vector2()
-const sceneObjects = []
-let selectedObject = null
-let dragOffset = new THREE.Vector3()
+
+// const raycaster = new THREE.Raycaster()
+// const mouse = new THREE.Vector2()
+// const sceneObjects = []
+// let selectedObject = null
+// let dragOffset = new THREE.Vector3()
 
 
-//  event listeners for mouse actions
-window.addEventListener('mousedown', onMouseDown, false)
-window.addEventListener('mousemove', onMouseMove, false)
-window.addEventListener('mouseup', onMouseUp, false)
+// //  event listeners for mouse actions
+// window.addEventListener('mousedown', onMouseDown, false)
+// window.addEventListener('mousemove', onMouseMove, false)
+// window.addEventListener('mouseup', onMouseUp, false)
 
-function onMouseMove(event) {
-  mouse.x = (event.clientX / sizes.width) * 2 - 1
-  mouse.y = -(event.clientY / sizes.height) * 2 + 1
+// function onMouseMove(event) {
+//   mouse.x = (event.clientX / sizes.width) * 2 - 1
+//   mouse.y = -(event.clientY / sizes.height) * 2 + 1
 
-  // If dragging, update the position of the selected object
-  if (selectedObject) {
-      raycaster.setFromCamera(mouse, camera)
-      const planeIntersect = raycaster.intersectObject(floor)[0]
-      if (planeIntersect) {
-          selectedObject.position.x = planeIntersect.point.x + dragOffset.x
-          selectedObject.position.z = planeIntersect.point.z + dragOffset.z
-      }
-  }
-}
+//   // If dragging, update the position of the selected object
+//   if (selectedObject) {
+//       raycaster.setFromCamera(mouse, camera)
+//       const planeIntersect = raycaster.intersectObject(floor)[0]
+//       if (planeIntersect) {
+//           selectedObject.position.x = planeIntersect.point.x + dragOffset.x
+//           selectedObject.position.z = planeIntersect.point.z + dragOffset.z
+//       }
+//   }
+// }
 
-function onMouseDown(event) {
-  // Perform raycasting to detect object under mouse
-  raycaster.setFromCamera(mouse, camera)
-  const intersects = raycaster.intersectObjects(scene.children, true)
+// function onMouseDown(event) {
+//   // Perform raycasting to detect object under mouse
+//   raycaster.setFromCamera(mouse, camera)
+//   const intersects = raycaster.intersectObjects(scene.children, true)
 
-  if (intersects.length > 0) {
-      const intersectedObject = intersects[0].object
+//   if (intersects.length > 0) {
+//       const intersectedObject = intersects[0].object
 
-      // Check if the clicked object is a chess piece
-      if (intersectedObject.parent && intersectedObject.parent.isGroup) {
-          selectedObject = intersectedObject.parent
+//       // Check if the clicked object is a chess piece
+//       if (intersectedObject.parent && intersectedObject.parent.isGroup) {
+//           selectedObject = intersectedObject.parent
 
-          // Calculate offset to keep piece aligned while dragging
-          raycaster.setFromCamera(mouse, camera)
-          const planeIntersect = raycaster.intersectObject(floor)[0];
-          if (planeIntersect) {
-              dragOffset.set(
-                  selectedObject.position.x - planeIntersect.point.x,
-                  0,
-                  selectedObject.position.z - planeIntersect.point.z
-              )
-          }
-      }
-  }
-}
+//           // Calculate offset to keep piece aligned while dragging
+//           raycaster.setFromCamera(mouse, camera)
+//           const planeIntersect = raycaster.intersectObject(floor)[0];
+//           if (planeIntersect) {
+//               dragOffset.set(
+//                   selectedObject.position.x - planeIntersect.point.x,
+//                   0,
+//                   selectedObject.position.z - planeIntersect.point.z
+//               )
+//           }
+//       }
+//   }
+// }
 
-function onMouseUp(event) {
-  // Release the selected object
-  if (selectedObject) {
-      // Snap the piece to the closest square
-      selectedObject.position.x = Math.round(selectedObject.position.x)
-      selectedObject.position.z = Math.round(selectedObject.position.z)
+// function onMouseUp(event) {
+//   // Release the selected object
+//   if (selectedObject) {
+//       // Snap the piece to the closest square
+//       selectedObject.position.x = Math.round(selectedObject.position.x)
+//       selectedObject.position.z = Math.round(selectedObject.position.z)
 
-      selectedObject = null // Deselect
-  }
-}
+//       selectedObject = null // Deselect
+//   }
+// }
 
 
 
@@ -553,14 +608,34 @@ function onMouseUp(event) {
 // }
 
 
+// ----------------------------------------------------------------------------------
+
+// PHYSICS
+
+const world = new CANNON.World()
+world.gravity.set(0, -9.82, 0); // Gravity in the y-axis
+
+const pieceMaterial = new CANNON.Material("pieceMaterial")
+const createPiecePhysics = (model, position) => {
+  const shape = new CANNON.Sphere(0.5)
+  const body = new CANNON.Body({
+    mass: 1, // Mass of the piece
+    position: new CANNON.Vec3(position.x, position.y, position.z),  // Position from the model
+    material: pieceMaterial
+  })
+  body.addShape(shape)
+  world.addBody(body)
+
+  return body
+};
 
 
 // ----------------------------------------------------------------------------------
 // Controls
-const controls = new OrbitControls(camera, canvas)
-controls.enableDamping = true
-controls.dampingFactor = 0.25
-controls.maxPolarAngle = Math.PI / 2
+const orbitControls = new OrbitControls(camera, canvas)
+orbitControls.enableDamping = true
+orbitControls.dampingFactor = 0.25
+orbitControls.maxPolarAngle = Math.PI / 2
 
 // controls.attach(object)
 // scene.add(controls)
@@ -582,22 +657,101 @@ window.addEventListener('dblclick', () => {
   }
 })
 
+
+// ----------------------------------------------------------------------------------
+
+// const cellSize = 1 // Size of each grid cell for the chessboard
+// const halfCell = cellSize / 2
+// const gridHalfSize = 4
+// const chessControls = new DragControls(meshGroup.children, camera, renderer.domElement)
+// let initialZ = 0
+// chessControls.recursive = false
+
+
+
+// chessControls.addEventListener('dragstart', (event) => {
+
+//   orbitControls.enabled = false
+
+//   console.log('Drag started', event)
+
+// })
+
+
+// chessControls.addEventListener('drag', (event) => {
+//   const selected = event.object
+
+//   // Snap to grid logic
+//   // selected.position.x = selected.position.x  * cellSize
+//   // selected.position.z = Math.round(selected.position.z / cellSize) * cellSize
+//   // selected.position.y = Math.round(selected.position.z / cellSize) * cellSize
+
+//   // selected.position.y = cellSize/2
+
+//   // Keep object within bounds of the grid
+//   // const minBoundary = -gridHalfSize + halfCell;
+//   // const maxBoundary = gridHalfSize - halfCell;
+
+//   // if (selected.position.x < minBoundary) selected.position.x = minBoundary;
+//   // if (selected.position.x > maxBoundary) selected.position.x = maxBoundary;
+//   // if (selected.position.z < minBoundary) selected.position.z = minBoundary;
+//   // if (selected.position.z > maxBoundary) selected.position.z = maxBoundary;
+
+//   // Ensure Y-axis remains constant (e.g., for the chessboard plane)
+//   selected.position.z= 0.5 //
+//   // selected.position.x= 0.5 //
+// })
+
+// chessControls.addEventListener('dragend', (event) => {
+//   orbitControls.enabled = true
+
+//   console.log('Drag ended', event)
+// })
+
+// chessControls.addEventListener('hoveron', (event) => {
+
+// })
+
+// chessControls.addEventListener('hoveroff', (event) => {
+
+// })
+
+
+
+
+const gridHelper = new THREE.GridHelper( 8, 8, 0x000000, 0xffffff)
+gridHelper.position.set(0,0,0)
+   scene.add(gridHelper)
+
+
+
+
+
 // ----------------------------------------------------------------------------------
 // ANIMATE
 const clock = new THREE.Clock()
 
 const tick = () =>
-{
+  {
 
-    // Update controls
-    controls.update()
-
-    if (camera.position.y < 0) {
-      camera.position.y = 0; // Prevent going below y = 0
+  // Update controls
+  orbitControls.update()
+  // chessControls.update()
+  if (camera.position.y < 0) {
+    camera.position.y = 0; // Prevent going below y = 0
   }
 
   constrainCamera()
 
+    world.step(1 / 60)
+
+    meshGroup.children.forEach((child, index) => {
+      const body = world.bodies[index]; // Assuming the bodies and meshes are in sync by order
+      if (body) {
+        child.position.copy(body.position)
+        child.rotation.copy(body.rotation)
+      }
+    })
     // Render
     renderer.render(scene, camera)
 
