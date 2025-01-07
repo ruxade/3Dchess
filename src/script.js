@@ -374,9 +374,6 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
   }
   scene.add(modelClone)
 
-    // Create the physics body for the piece
-    const piecePhysicsBody = createPiecePhysics(modelClone, position)
-
   meshGroup.add(modelClone)
 }
 
@@ -612,22 +609,10 @@ function constrainCamera() {
 
 // PHYSICS
 
-const world = new CANNON.World()
-world.gravity.set(0, -9.82, 0); // Gravity in the y-axis
+// const world = new CANNON.World()
+// world.gravity.set(0, -9.82, 0); // Gravity in the y-axis
 
-const pieceMaterial = new CANNON.Material("pieceMaterial")
-const createPiecePhysics = (model, position) => {
-  const shape = new CANNON.Sphere(0.5)
-  const body = new CANNON.Body({
-    mass: 1, // Mass of the piece
-    position: new CANNON.Vec3(position.x, position.y, position.z),  // Position from the model
-    material: pieceMaterial
-  })
-  body.addShape(shape)
-  world.addBody(body)
 
-  return body
-};
 
 
 // ----------------------------------------------------------------------------------
@@ -660,61 +645,61 @@ window.addEventListener('dblclick', () => {
 
 // ----------------------------------------------------------------------------------
 
-// const cellSize = 1 // Size of each grid cell for the chessboard
-// const halfCell = cellSize / 2
-// const gridHalfSize = 4
-// const chessControls = new DragControls(meshGroup.children, camera, renderer.domElement)
-// let initialZ = 0
+const cellSize = 1 // Size of each grid cell for the chessboard
+const halfCell = cellSize / 2
+const gridHalfSize = 4
+const chessControls = new DragControls(meshGroup.children, camera, renderer.domElement)
+let initialZ = 0
 // chessControls.recursive = false
 
 
 
-// chessControls.addEventListener('dragstart', (event) => {
+chessControls.addEventListener('dragstart', (event) => {
 
-//   orbitControls.enabled = false
+  orbitControls.enabled = false
 
-//   console.log('Drag started', event)
+  console.log('Drag started', event)
 
-// })
+})
 
 
-// chessControls.addEventListener('drag', (event) => {
-//   const selected = event.object
+chessControls.addEventListener('drag', (event) => {
+  const selected = event.object
 
-//   // Snap to grid logic
-//   // selected.position.x = selected.position.x  * cellSize
-//   // selected.position.z = Math.round(selected.position.z / cellSize) * cellSize
-//   // selected.position.y = Math.round(selected.position.z / cellSize) * cellSize
+  // Snap to grid logic
+  selected.position.x = selected.position.x  * cellSize
+  selected.position.z = Math.round(selected.position.z / cellSize) * cellSize
+  // selected.position.y = Math.round(selected.position.z / cellSize) * cellSize
 
-//   // selected.position.y = cellSize/2
+  // selected.position.y = cellSize/2
 
-//   // Keep object within bounds of the grid
-//   // const minBoundary = -gridHalfSize + halfCell;
-//   // const maxBoundary = gridHalfSize - halfCell;
+  // Keep object within bounds of the grid
+  // const minBoundary = -gridHalfSize + halfCell;
+  // const maxBoundary = gridHalfSize - halfCell;
 
-//   // if (selected.position.x < minBoundary) selected.position.x = minBoundary;
-//   // if (selected.position.x > maxBoundary) selected.position.x = maxBoundary;
-//   // if (selected.position.z < minBoundary) selected.position.z = minBoundary;
-//   // if (selected.position.z > maxBoundary) selected.position.z = maxBoundary;
+  // if (selected.position.x < minBoundary) selected.position.x = minBoundary;
+  // if (selected.position.x > maxBoundary) selected.position.x = maxBoundary;
+  // if (selected.position.z < minBoundary) selected.position.z = minBoundary;
+  // if (selected.position.z > maxBoundary) selected.position.z = maxBoundary;
 
-//   // Ensure Y-axis remains constant (e.g., for the chessboard plane)
-//   selected.position.z= 0.5 //
-//   // selected.position.x= 0.5 //
-// })
+  // Ensure Y-axis remains constant (e.g., for the chessboard plane)
+  selected.position.z= 0.5 //
+  // selected.position.x= 0.5 //
+})
 
-// chessControls.addEventListener('dragend', (event) => {
-//   orbitControls.enabled = true
+chessControls.addEventListener('dragend', (event) => {
+  orbitControls.enabled = true
 
-//   console.log('Drag ended', event)
-// })
+  console.log('Drag ended', event)
+})
 
-// chessControls.addEventListener('hoveron', (event) => {
+chessControls.addEventListener('hoveron', (event) => {
 
-// })
+})
 
-// chessControls.addEventListener('hoveroff', (event) => {
+chessControls.addEventListener('hoveroff', (event) => {
 
-// })
+})
 
 
 
@@ -732,26 +717,17 @@ gridHelper.position.set(0,0,0)
 const clock = new THREE.Clock()
 
 const tick = () =>
-  {
+{
 
-  // Update controls
-  orbitControls.update()
-  // chessControls.update()
-  if (camera.position.y < 0) {
-    camera.position.y = 0; // Prevent going below y = 0
+    // Update controls
+    orbitControls.update()
+    chessControls.update()
+    if (camera.position.y < 0) {
+      camera.position.y = 0; // Prevent going below y = 0
   }
 
   constrainCamera()
 
-    world.step(1 / 60)
-
-    meshGroup.children.forEach((child, index) => {
-      const body = world.bodies[index]; // Assuming the bodies and meshes are in sync by order
-      if (body) {
-        child.position.copy(body.position)
-        child.rotation.copy(body.rotation)
-      }
-    })
     // Render
     renderer.render(scene, camera)
 
