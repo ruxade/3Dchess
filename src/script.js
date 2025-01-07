@@ -58,7 +58,7 @@ window.addEventListener('resize', () =>
 })
 
 
-
+// ----------------------------------------------------------------------------------
 
 // LIGHTS
 const light = new THREE.AmbientLight(0xffffff, 0.5) // Color, intensity
@@ -71,8 +71,9 @@ scene.add(pointLight)
 const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGHT HELPER
 // scene.add(pointLightHelper);
 
-// BASE
+// ----------------------------------------------------------------------------------
 
+// BASE
 
 // const parameters = {
 //     color: 0xff0000,
@@ -94,7 +95,7 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 // const material = new THREE.MeshBasicMaterial({ color: '#ff0000'})
 // const mesh = new THREE.Mesh(geometry, material)
 // scene.add(mesh)
-// -----------------------------------------
+
 // MODELS
 // GLTF LOADER
 // const gltfLoader = new GLTFLoader()
@@ -151,14 +152,14 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
   // }
 
 
-
+// ----------------------------------------------------------------------------------
 
 // TEXTURES and MATERIALS
 const textureLoader = new THREE.TextureLoader()
 
 // LIGHT and DARK
-const darkTexture = textureLoader.load('/textures/matcaps/23.png')
-const lightTexture = textureLoader.load('/textures/matcaps/16.png')
+const darkTexture = textureLoader.load('/textures/matcaps/32.png')
+const lightTexture = textureLoader.load('/textures/matcaps/17.png')
 const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
 boardTexture.repeat.x = 8
 boardTexture.repeat.y = 8
@@ -172,7 +173,11 @@ darkTexture.magFilter  =THREE.NearestFilter
 const darkMaterial = new THREE.MeshMatcapMaterial({
   matcap: darkTexture,
   // side: THREE.FrontSide,  // Set the side to render
-  flatShading: false       //  enables flat shading for a more stylized look
+  flatShading: false,     //  enables flat shading for a more stylized look
+  flatShading: false,
+  roughness: 0.8,
+  metalness: 0.1
+
 })
 
 const lightMaterial = new THREE.MeshMatcapMaterial({
@@ -183,12 +188,17 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
 
 
 // SPHERE
-const backgroundTexture = textureLoader.load('/textures/matcaps/27.png')
+const backgroundTexture = textureLoader.load('/textures/matcaps/34.png')
 
-const sphereRadius = 50
+const sphereRadius = 30
 const sphereCenter = new THREE.Vector3(0, 0, 0)
 
-const backgroundMaterial = new THREE.MeshMatcapMaterial({ matcap: backgroundTexture})
+const backgroundMaterial = new THREE.MeshMatcapMaterial({
+  matcap: backgroundTexture,
+  flatShading: false,
+  roughness: 0.9,
+  metalness: 0.1
+})
 // const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
 const backgroundGeometry = new THREE.SphereGeometry(sphereRadius, 64, 32); // A large sphere
@@ -199,7 +209,7 @@ backgroundMesh.position.set(0, 0, 0)
 scene.add(backgroundMesh)
 
 // CILINDER
-const plateTexture = textureLoader.load('/textures/gradients/3.png')
+const plateTexture = textureLoader.load('/textures/matcaps/6.png')
 // groundTexture.repeat.x = 8
 // groundTexture.repeat.y = 8
 // plateTexture.wrapS = THREE.RepeatWrapping // Enable wrapping on the S (horizontal) axis
@@ -208,12 +218,12 @@ const plateTexture = textureLoader.load('/textures/gradients/3.png')
 plateTexture.magFilter  =THREE.NearestFilter
 
 // FLOOR
-const floorGeometry = new THREE.CylinderGeometry(13, 13, 1, 64, 3, false)
-const plateMaterial = new THREE.MeshBasicMaterial({
-  map : plateTexture,
+const floorGeometry = new THREE.CylinderGeometry(13, 13, 1, 64, 12, false)
+const plateMaterial = new THREE.MeshMatcapMaterial({
+  matcap : plateTexture,
   flatShading: false,
   roughness: 0.8,
-  metalness: 0.2
+  metalness: 0.9
 })
 // const floorMaterial = new THREE.MeshStandardMaterial({
 //   color: '#ffffff',
@@ -246,11 +256,16 @@ const board = new THREE.Group
       col - boardSize / 2 + 0.5,
        0,
        row - boardSize / 2 + 0.5)
-board.add(square)
 
+  board.add(square)
   }}
-  board.position.set(0, -0.5, 0)
-    scene.add(board)
+board.position.set(0, -0.5, 0)
+
+scene.add(board)
+
+
+
+// ----------------------------------------------------------------------------------
 
 
 // LOADER FBX
@@ -370,50 +385,37 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
   })
 })
 
-// meshGroup.add(loadedModels)
-// scene.add(meshGroup)
 
 
-// BOUNDING BOX- fail
+// BOUNDING BOX- ?
+
 // const combinedBoundingBox = () => {
 //   const box = new THREE.Box3()  //  box to encompass all objects
 //   const group = new THREE.Group()
-
 //   scene.traverse((object) => {
 //     if (object.isMesh) {  // ignoring lights, cameras
 //       object.geometry.computeBoundingBox()
 
 //       box.expandByObject(object)
 //       group.add(object)
-
 //     }
 //   })
-
 //   return box
-
 // }
-
 // //  visualize the combined bounding box
 // const box = combinedBoundingBox()
 // console.log('Combined Bounding Box:', box)
-
 // const center = new THREE.Vector3()
 // box.getCenter(center)
 // console.log('Bounding Box Center:', center)
-
 // // scene.traverse((object) => {
 // //   if (object.isMesh) {
 // //     group.add(object)  // Add each object to the group
 // //   }
 // // })
-
-
 // MESH GROUP
 
-
-
 // scene.add(meshGroup)
-
 // meshGroup.position.set(0, 0, 0)
 
 
@@ -470,7 +472,7 @@ function constrainCamera() {
 // gui.add(parameters, 'spin')
 
 
-// -----------------------------------------
+// ----------------------------------------------------------------------------------
 // Move Obj
 const raycaster = new THREE.Raycaster()
 const mouse = new THREE.Vector2()
@@ -547,7 +549,7 @@ function onMouseUp(event) {
 
 
 
-// -----------------------------------------
+// ----------------------------------------------------------------------------------
 // Controls
 const controls = new OrbitControls(camera, canvas)
 controls.enableDamping = true
@@ -557,7 +559,7 @@ controls.maxPolarAngle = Math.PI / 2
 // controls.attach(object)
 // scene.add(controls)
 
-// -----------------------------------------
+// ----------------------------------------------------------------------------------
 // RENDERER
 const renderer = new THREE.WebGLRenderer({
     canvas: canvas
@@ -574,7 +576,7 @@ window.addEventListener('dblclick', () => {
   }
 })
 
-// -----------------------------------------
+// ----------------------------------------------------------------------------------
 // ANIMATE
 const clock = new THREE.Clock()
 
@@ -589,7 +591,7 @@ const tick = () =>
   }
 
   constrainCamera()
-  
+
     // Render
     renderer.render(scene, camera)
 
