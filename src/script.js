@@ -156,27 +156,23 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 // TEXTURES and MATERIALS
 const textureLoader = new THREE.TextureLoader()
 
+// LIGHT and DARK
 const darkTexture = textureLoader.load('/textures/matcaps/23.png')
 const lightTexture = textureLoader.load('/textures/matcaps/16.png')
 const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
-
-const backgroundTexture = textureLoader.load('/textures/matcaps/6.png')
-
 boardTexture.repeat.x = 8
 boardTexture.repeat.y = 8
 boardTexture.wrapS = THREE.MirroredRepeatWrapping
 boardTexture.wrapT = THREE.MirroredRepeatWrapping
 boardTexture.offset.set(0.5, 0.5)
-darkTexture.magFilter  =THREE.NearestFilter
 boardTexture.magFilter  =THREE.NearestFilter
 
-
-const textureMaterial = new THREE.MeshMatcapMaterial({ matcap: backgroundTexture})
+darkTexture.magFilter  =THREE.NearestFilter
 
 const darkMaterial = new THREE.MeshMatcapMaterial({
   matcap: darkTexture,
-  // side: THREE.FrontSide,  // Set the side to render (optional, based on your preference)
-  flatShading: false       // Optional: enables flat shading for a more stylized look
+  // side: THREE.FrontSide,  // Set the side to render
+  flatShading: false       //  enables flat shading for a more stylized look
 })
 
 const lightMaterial = new THREE.MeshMatcapMaterial({
@@ -185,26 +181,50 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
   flatShading: false
 })
 
-const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
-const backgroundGeometry = new THREE.SphereGeometry(50, 64, 64); // A large sphere
-const backgroundMesh = new THREE.Mesh(backgroundGeometry, textureMaterial)
+// SPHERE
+const backgroundTexture = textureLoader.load('/textures/matcaps/27.png')
+
+const sphereRadius = 50
+const sphereCenter = new THREE.Vector3(0, 0, 0)
+
+const backgroundMaterial = new THREE.MeshMatcapMaterial({ matcap: backgroundTexture})
+// const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
+
+const backgroundGeometry = new THREE.SphereGeometry(sphereRadius, 64, 32); // A large sphere
+const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial)
 backgroundGeometry.scale(-1, 1, 1)
 backgroundMesh.position.set(0, 0, 0)
+
 scene.add(backgroundMesh)
 
-// FLOOR
+// CILINDER
+const plateTexture = textureLoader.load('/textures/gradients/3.png')
+// groundTexture.repeat.x = 8
+// groundTexture.repeat.y = 8
+// plateTexture.wrapS = THREE.RepeatWrapping // Enable wrapping on the S (horizontal) axis
+// plateTexture.wrapT = THREE.RepeatWrapping // Enable wrapping on the T (vertical) axis
+// plateTexture.repeat.set(0.1, 0.1)
+plateTexture.magFilter  =THREE.NearestFilter
 
-const floorGeometry = new THREE.PlaneGeometry(8, 8)
-const floorMaterial = new THREE.MeshStandardMaterial({
-  color: '#ffffff',
+// FLOOR
+const floorGeometry = new THREE.CylinderGeometry(13, 13, 1, 64, 3, false)
+const plateMaterial = new THREE.MeshBasicMaterial({
+  map : plateTexture,
+  flatShading: false,
   roughness: 0.8,
   metalness: 0.2
 })
-const floor = new THREE.Mesh(floorGeometry, boardMaterial)
-floor.rotation.x = - Math.PI / 2
-// floor.position.set(4,0,4)
-// scene.add(floor)
+// const floorMaterial = new THREE.MeshStandardMaterial({
+//   color: '#ffffff',
+//   roughness: 0.8,
+//   metalness: 0.2
+// })
+const floor = new THREE.Mesh(floorGeometry, plateMaterial)
+floor.rotation.y = - Math.PI / 2
+floor.position.set(0,-1,0)
+
+scene.add(floor)
 
 
 const boardSize = 8
@@ -403,7 +423,7 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
 // CAMERA
 // Base camera
 const aspectRatio = sizes.width / sizes.height
-const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100) // fov , aspect, near, far
+const camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 100) // fov , aspect, near, far
 // ortho CAMERA
 // const camera = new THREE.OrthographicCamera(-1 * aspectRatio, 1 * aspectRatio, 1, -1, 0.1, 100)
 camera.position.x = 9
@@ -418,6 +438,22 @@ const helper = new THREE.CameraHelper( camera )
 gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Position X')
 gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
 gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('Position Z')
+
+
+
+function constrainCamera() {
+  const cameraPosition = camera.position.clone()
+  const distanceFromCenter = cameraPosition.distanceTo(sphereCenter)
+
+  if (distanceFromCenter > sphereRadius) {
+    // Restrict the camera to the surface of the sphere
+    const direction = cameraPosition.sub(sphereCenter).normalize();
+    camera.position.copy(sphereCenter.clone().add(direction.multiplyScalar(sphereRadius)));
+  }
+}
+
+
+
 
 // gui.hide()
 // gui.add(mesh.position, 'y').min(- 3).max(3).step(0.01).name('elevation')
@@ -552,6 +588,8 @@ const tick = () =>
       camera.position.y = 0; // Prevent going below y = 0
   }
 
+  constrainCamera()
+  
     // Render
     renderer.render(scene, camera)
 
