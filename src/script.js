@@ -156,8 +156,8 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 // TEXTURES and MATERIALS
 const textureLoader = new THREE.TextureLoader()
 
-const darkTexture = textureLoader.load('/textures/matcaps/11.png')
-const lightTexture = textureLoader.load('/textures/matcaps/14.png')
+const darkTexture = textureLoader.load('/textures/matcaps/23.png')
+const lightTexture = textureLoader.load('/textures/matcaps/16.png')
 const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
 
 boardTexture.repeat.x = 8
@@ -200,7 +200,7 @@ floor.rotation.x = - Math.PI / 2
 
 const boardSize = 8
 const squareSize = 1
-const geometry = new THREE.BoxGeometry(squareSize, 0.5, squareSize)
+const geometry = new THREE.BoxGeometry(squareSize, 1, squareSize)
 
 // const square = new THREE.Mesh(geometry, darkMaterial)
 // scene.add(square)
@@ -220,7 +220,7 @@ const board = new THREE.Group
 board.add(square)
 
   }}
-  board.position.set(0, -0.25, 0)
+  board.position.set(0, -0.5, 0)
     scene.add(board)
 
 
