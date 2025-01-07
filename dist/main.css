@@ -5,13 +5,12 @@
 }
 
 html,
-body
-{
+body{
+  background: rgb(7, 7, 7);
     overflow: hidden;
 }
 
-.webgl
-{
+.webgl{
     position: fixed;
     top: 0;
     left: 0;
