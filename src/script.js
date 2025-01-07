@@ -222,7 +222,7 @@ const floorMaterial = new THREE.MeshStandardMaterial({
 })
 const floor = new THREE.Mesh(floorGeometry, boardMaterial)
 floor.rotation.x = - Math.PI / 2
-floor.position.set(4,0,4)
+// floor.position.set(4,0,4)
 scene.add(floor)
 
 
@@ -247,6 +247,7 @@ const modelPaths = {
   queen: '/models/set/fbx/queen.fbx'
 }
 
+const meshGroup = new THREE.Group()
 const loadedModels = {}
 
 const loadModel = (modelName, modelPath, onComplete) => {
@@ -275,6 +276,7 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
   modelClone.traverse((child) => {
     if (child.isMesh) {
       child.material = material
+
     }
   })
   modelClone.scale.set(scale, scale, scale)
@@ -287,6 +289,7 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
 }
 
 const scale = 0.01
+
 
 
 const positions = [
@@ -309,17 +312,20 @@ const positions = [
   { model: 'rook', position: { x: 7, y: 0, z: 0 } }
 ]
 
-const meshGroup = new THREE.Group()
-
+// UPDATE POSITIONS
+const offset = 4
+positions.map(({ model, position }) => {
+  position.x -= offset
+  position.z -= offset
+})
 
 // Load all models
 Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
   loadModel(modelName, modelPath, () => {
     if (Object.keys(loadedModels).length === Object.keys(modelPaths).length) {
-      // Center positions dynamically
-      const centeredPosition = (coord) => coord + 0.5
-      const mirrorCenteredPosition = (coord) => coord - 1
 
+      const centeredPosition = (coord) => coord + 0.5
+      
 
       // Add first set to the scene
       positions.forEach(({ model, position }) => {
@@ -333,17 +339,17 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
       // Add mirrored set to the scene with light material
       positions.forEach(({ model, position }) => {
 
-        const centeredX = mirrorCenteredPosition(position.x)
-        const centeredZ = mirrorCenteredPosition(position.z)
 
-        const mirroredPosition = { x: 7- centeredX, y: position.y, z: 7- centeredZ }
+        const mirroredPosition = { x: - position.x, y: position.y, z: - position.z }
         addPieceToScene(model, mirroredPosition, lightMaterial, true);
       })
     }
-    // meshGroup.add(object)
+
   })
 })
 
+// meshGroup.add(loadedModels)
+// scene.add(meshGroup)
 
 
 // BOUNDING BOX- fail
