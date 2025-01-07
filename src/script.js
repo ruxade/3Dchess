@@ -430,6 +430,68 @@ gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('Position Z')
 const raycaster = new THREE.Raycaster()
 const mouse = new THREE.Vector2()
 const sceneObjects = []
+let selectedObject = null
+let dragOffset = new THREE.Vector3()
+
+
+//  event listeners for mouse actions
+window.addEventListener('mousedown', onMouseDown, false)
+window.addEventListener('mousemove', onMouseMove, false)
+window.addEventListener('mouseup', onMouseUp, false)
+
+function onMouseMove(event) {
+  mouse.x = (event.clientX / sizes.width) * 2 - 1
+  mouse.y = -(event.clientY / sizes.height) * 2 + 1
+
+  // If dragging, update the position of the selected object
+  if (selectedObject) {
+      raycaster.setFromCamera(mouse, camera)
+      const planeIntersect = raycaster.intersectObject(board)[0]
+      if (planeIntersect) {
+          selectedObject.position.x = planeIntersect.point.x + dragOffset.x
+          selectedObject.position.z = planeIntersect.point.z + dragOffset.z
+      }
+  }
+}
+
+function onMouseDown(event) {
+  // Perform raycasting to detect object under mouse
+  raycaster.setFromCamera(mouse, camera)
+  const intersects = raycaster.intersectObjects(scene.children, true)
+
+  if (intersects.length > 0) {
+      const intersectedObject = intersects[0].object
+
+      // Check if the clicked object is a chess piece
+      if (intersectedObject.parent && intersectedObject.parent.isGroup) {
+          selectedObject = intersectedObject.parent
+
+          // Calculate offset to keep piece aligned while dragging
+          raycaster.setFromCamera(mouse, camera)
+          const planeIntersect = raycaster.intersectObject(floor)[0]
+          if (planeIntersect) {
+              dragOffset.set(
+                  selectedObject.position.x - planeIntersect.point.x,
+                  0,
+                  selectedObject.position.z - planeIntersect.point.z
+              )
+          }
+      }
+  }
+}
+
+function onMouseUp(event) {
+  // Release the selected object
+  if (selectedObject) {
+      // Snap the piece to the closest square
+      selectedObject.position.x = Math.round(selectedObject.position.x)
+      selectedObject.position.z = Math.round(selectedObject.position.z)
+
+      selectedObject = null // Deselect
+  }
+}
+
+
 
 // function onMouseClick(event) {
 //   // Convert mouse click position to normalized device coordinates (-1 to +1) for raycasting
