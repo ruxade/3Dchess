@@ -6,7 +6,7 @@ import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 
-console.log('hello 3Dchess')
+
 // -----------------------------------------
 
 // Canvas
@@ -74,8 +74,6 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 // BASE
 
 
-
-
 // const parameters = {
 //     color: 0xff0000,
 //     spin: () =>
@@ -98,7 +96,7 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 // scene.add(mesh)
 // -----------------------------------------
 // MODELS
-
+// GLTF LOADER
 // const gltfLoader = new GLTFLoader()
 // console.log(gltfLoader)
 
@@ -118,32 +116,6 @@ const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGH
 //     scene.add(gltf.scene[0])
 //   }
 // )
-
-
-// const loadModelsSequentially = () => {
-  // fbxLoader.load(
-//   '/models/set/fbx/pawn.fbx', // Path to the FBX model
-//   (pawn) => {
-//     console.log('FBX Model loaded successfully!')
-//     pawn.scale.set(0.01, 0.01, 0.01)
-
-//     pawn.traverse((child) => {
-//       if (child.isMesh) {
-//         child.geometry.computeVertexNormals()
-//         child.material = darkMaterial
-//       }
-//     })
-
-//     scene.add(pawn) // Add the loaded object to the scene
-//   },
-//   (xhr) => {
-//     console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`);
-//   },
-//   (error) => {
-  //     console.error('Error loading FBX model:', error);
-  //   }
-  // )
-
 
 
   // const loadAndPositionModel = (modelPath, scale, position, material) => {
@@ -212,7 +184,7 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
 const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
 
-// FLOOR /BOARD
+// FLOOR
 
 const floorGeometry = new THREE.PlaneGeometry(8, 8)
 const floorMaterial = new THREE.MeshStandardMaterial({
@@ -223,12 +195,33 @@ const floorMaterial = new THREE.MeshStandardMaterial({
 const floor = new THREE.Mesh(floorGeometry, boardMaterial)
 floor.rotation.x = - Math.PI / 2
 // floor.position.set(4,0,4)
-scene.add(floor)
+// scene.add(floor)
 
 
+const boardSize = 8
+const squareSize = 1
+const geometry = new THREE.BoxGeometry(squareSize, 0.5, squareSize)
 
+// const square = new THREE.Mesh(geometry, darkMaterial)
+// scene.add(square)
+const board = new THREE.Group
 
+  for (let row = 0; row < boardSize; row++) {
+    for (let col = 0; col < boardSize; col++) {
+    const isDarkSquare = (row + col) % 2 === 0
 
+    const material = isDarkSquare ? darkMaterial : lightMaterial
+    const square = new THREE.Mesh(geometry, material)
+
+    square.position.set(
+      col - boardSize / 2 + 0.5,
+       0,
+       row - boardSize / 2 + 0.5)
+board.add(square)
+
+  }}
+  board.position.set(0, -0.25, 0)
+    scene.add(board)
 
 
 // LOADER FBX
@@ -288,7 +281,7 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
   scene.add(modelClone)
 }
 
-const scale = 0.01
+const scale = 0.02
 
 
 
@@ -325,7 +318,7 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
     if (Object.keys(loadedModels).length === Object.keys(modelPaths).length) {
 
       const centeredPosition = (coord) => coord + 0.5
-      
+
 
       // Add first set to the scene
       positions.forEach(({ model, position }) => {
@@ -411,7 +404,7 @@ camera.position.z = 9
 camera.lookAt(floor.position.x + 5)
 scene.add(camera)
 const helper = new THREE.CameraHelper( camera )
-scene.add( helper )
+// scene.add( helper )
 
 gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Position X')
 gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
