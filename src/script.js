@@ -218,7 +218,13 @@ const plateTexture = textureLoader.load('/textures/matcaps/6.png')
 plateTexture.magFilter  =THREE.NearestFilter
 
 // FLOOR
-const floorGeometry = new THREE.CylinderGeometry(13, 13, 1, 64, 12, false)
+const floorGeometry = new THREE.CylinderGeometry(
+    13, // radiusTop
+    12, // radiusBottom
+    1, // height
+    64, // radialSegments
+    12,
+    false)
 const plateMaterial = new THREE.MeshMatcapMaterial({
   matcap : plateTexture,
   flatShading: false,
