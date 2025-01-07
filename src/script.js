@@ -57,19 +57,7 @@ window.addEventListener('resize', () =>
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
 })
 
-// FLOOR
 
-const floorGeometry = new THREE.PlaneGeometry(8, 8)
-const floorMaterial = new THREE.MeshStandardMaterial({
-  color: '#ffffff',
-  roughness: 0.8,
-  metalness: 0.2
-})
-const floor = new THREE.Mesh(floorGeometry, floorMaterial)
-floor.rotation.x = - Math.PI / 2
-floor.position.set(4,0,4)
-scene.add(floor)
-// )
 
 
 // LIGHTS
@@ -198,8 +186,15 @@ const textureLoader = new THREE.TextureLoader()
 
 const darkTexture = textureLoader.load('/textures/matcaps/11.png')
 const lightTexture = textureLoader.load('/textures/matcaps/14.png')
+const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
 
+boardTexture.repeat.x = 8
+boardTexture.repeat.y = 8
+boardTexture.wrapS = THREE.MirroredRepeatWrapping
+boardTexture.wrapT = THREE.MirroredRepeatWrapping
+boardTexture.offset.set(0.5, 0.5)
 darkTexture.magFilter  =THREE.NearestFilter
+boardTexture.magFilter  =THREE.NearestFilter
 
 
 const darkMaterial = new THREE.MeshMatcapMaterial({
@@ -213,6 +208,28 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
   // side: THREE.FrontSide,
   flatShading: false
 })
+
+const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
+
+
+// FLOOR /BOARD
+
+const floorGeometry = new THREE.PlaneGeometry(8, 8)
+const floorMaterial = new THREE.MeshStandardMaterial({
+  color: '#ffffff',
+  roughness: 0.8,
+  metalness: 0.2
+})
+const floor = new THREE.Mesh(floorGeometry, boardMaterial)
+floor.rotation.x = - Math.PI / 2
+floor.position.set(4,0,4)
+scene.add(floor)
+
+
+
+
+
+
 
 // LOADER FBX
 
@@ -239,6 +256,7 @@ const loadModel = (modelName, modelPath, onComplete) => {
       object.traverse((child) => {
         if (child.isMesh) {
           // child.geometry.computeVertexNormals()
+          child.geometry.computeBoundingBox()
         }
       })
       loadedModels[modelName] = object
@@ -280,6 +298,7 @@ const positions = [
   { model: 'pawn', position: { x: 5, y: 0, z: 1 } },
   { model: 'pawn', position: { x: 6, y: 0, z: 1 } },
   { model: 'pawn', position: { x: 7, y: 0, z: 1 } },
+
   { model: 'rook', position: { x: 0, y: 0, z: 0 } },
   { model: 'knight', position: { x: 1, y: 0, z: 0 } },
   { model: 'bishop', position: { x: 2, y: 0, z: 0 } },
@@ -290,6 +309,8 @@ const positions = [
   { model: 'rook', position: { x: 7, y: 0, z: 0 } }
 ]
 
+const meshGroup = new THREE.Group()
+
 
 // Load all models
 Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
@@ -297,7 +318,7 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
     if (Object.keys(loadedModels).length === Object.keys(modelPaths).length) {
       // Center positions dynamically
       const centeredPosition = (coord) => coord + 0.5
-      // const mirrorCenteredPosition = (coord) => coord - 0.5
+      const mirrorCenteredPosition = (coord) => coord - 1
 
 
       // Add first set to the scene
@@ -311,21 +332,61 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
 
       // Add mirrored set to the scene with light material
       positions.forEach(({ model, position }) => {
-        const mirroredPosition = { x: 7 - position.x, y: position.y, z: 7 - position.z }
+
+        const centeredX = mirrorCenteredPosition(position.x)
+        const centeredZ = mirrorCenteredPosition(position.z)
+
+        const mirroredPosition = { x: 7- centeredX, y: position.y, z: 7- centeredZ }
         addPieceToScene(model, mirroredPosition, lightMaterial, true);
       })
-
     }
+    // meshGroup.add(object)
   })
 })
 
 
 
+// BOUNDING BOX- fail
+// const combinedBoundingBox = () => {
+//   const box = new THREE.Box3()  //  box to encompass all objects
+//   const group = new THREE.Group()
+
+//   scene.traverse((object) => {
+//     if (object.isMesh) {  // ignoring lights, cameras
+//       object.geometry.computeBoundingBox()
+
+//       box.expandByObject(object)
+//       group.add(object)
+
+//     }
+//   })
+
+//   return box
+
+// }
+
+// //  visualize the combined bounding box
+// const box = combinedBoundingBox()
+// console.log('Combined Bounding Box:', box)
+
+// const center = new THREE.Vector3()
+// box.getCenter(center)
+// console.log('Bounding Box Center:', center)
+
+// // scene.traverse((object) => {
+// //   if (object.isMesh) {
+// //     group.add(object)  // Add each object to the group
+// //   }
+// // })
+
+
+// MESH GROUP
 
 
 
+// scene.add(meshGroup)
 
-
+// meshGroup.position.set(0, 0, 0)
 
 
 
@@ -334,16 +395,17 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
 // CAMERA
 // Base camera
 const aspectRatio = sizes.width / sizes.height
-const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100)
+const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100) // fov , aspect, near, far
 // ortho CAMERA
 // const camera = new THREE.OrthographicCamera(-1 * aspectRatio, 1 * aspectRatio, 1, -1, 0.1, 100)
-camera.position.x = 4
-camera.position.y = 4
-camera.position.z = 7
+camera.position.x = 9
+camera.position.y = 5
+camera.position.z = 9
 // camera.lookAt(4, 4, 5)
+camera.lookAt(floor.position.x + 5)
 scene.add(camera)
-// camera.lookAt(mesh.position)
-
+const helper = new THREE.CameraHelper( camera )
+scene.add( helper )
 
 gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Position X')
 gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
