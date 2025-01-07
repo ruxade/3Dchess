@@ -1,7 +1,7 @@
 import './style.css'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import gsap from 'gsap'
+import { gsap } from 'gsap'
 import * as dat from 'dat.gui'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
@@ -87,6 +87,60 @@ gui
     .onChange( () => {
       fog1.color.set(fogSettings.color)
     })
+
+
+    // LOADING
+
+  const loadingBarElement = document.querySelector('.loading-bar')
+
+
+
+const loadingManager = new THREE.LoadingManager(
+  () =>{
+    console.log('loaded')
+    gsap.to(overlayMaterial.uniforms.uAlpha, {duration: 3, value : 0})
+  },
+  (itemUrl, itemsLoaded, itemsTotal) =>{
+
+    const progressRatio =  itemsLoaded / itemsLoaded
+    loadingBarElement.style.transform = 'scaleX(0)'
+    console.log(progressRatio)
+
+  }
+
+)
+
+
+
+
+
+// OVERLAY
+
+const overlayGeometry = new THREE.PlaneGeometry(2, 2, 1, 1)
+const overlayMaterial = new THREE.ShaderMaterial ({
+  // wireframe: true,
+  transparent: true,
+  uniforms:
+  {
+    uAlpha: { value: 1 }
+  },
+  vertexShader: `
+    void main ()
+    {
+    gl_Position =  vec4(position, 1.0);
+    }`,
+    fragmentShader:`
+    uniform float uAlpha;
+    void main ()
+    {
+      gl_FragColor = vec4(0.0, 0.0, 0.0, uAlpha);
+    }`
+})
+
+const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial)
+scene.add(overlay)
+
+
 
 
 // LIGHTS
@@ -195,18 +249,18 @@ gui
 // ----------------------------------------------------------------------------------
 
 // TEXTURES and MATERIALS
-const textureLoader = new THREE.TextureLoader()
+const textureLoader = new THREE.TextureLoader(loadingManager)
 
 // LIGHT and DARK
 const darkTexture = textureLoader.load('/textures/matcaps/32.png')
 const lightTexture = textureLoader.load('/textures/matcaps/17.png')
-const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
-boardTexture.repeat.x = 8
-boardTexture.repeat.y = 8
-boardTexture.wrapS = THREE.MirroredRepeatWrapping
-boardTexture.wrapT = THREE.MirroredRepeatWrapping
-boardTexture.offset.set(0.5, 0.5)
-boardTexture.magFilter  =THREE.NearestFilter
+// const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
+// boardTexture.repeat.x = 8
+// boardTexture.repeat.y = 8
+// boardTexture.wrapS = THREE.MirroredRepeatWrapping
+// boardTexture.wrapT = THREE.MirroredRepeatWrapping
+// boardTexture.offset.set(0.5, 0.5)
+// boardTexture.magFilter  =THREE.NearestFilter
 
 darkTexture.magFilter  =THREE.NearestFilter
 
@@ -267,8 +321,8 @@ const floorGeometry = new THREE.CylinderGeometry(
 const plateMaterial = new THREE.MeshMatcapMaterial({
   matcap : plateTexture,
   flatShading: false,
-  roughness: 0.8,
-  metalness: 0.9
+  // roughness: 0.8,
+  // metalness: 0.9
 })
 // const floorMaterial = new THREE.MeshStandardMaterial({
 //   color: '#ffffff',
@@ -315,7 +369,7 @@ scene.add(board)
 
 // LOADER FBX
 
-const fbxLoader = new FBXLoader()
+const fbxLoader = new FBXLoader(loadingManager)
 
 
 
