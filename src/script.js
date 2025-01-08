@@ -97,18 +97,22 @@ gui
 
 const loadingManager = new THREE.LoadingManager(
   () =>{
-    console.log('loaded')
-    gsap.to(overlayMaterial.uniforms.uAlpha, {duration: 3, value : 0})
+    gsap.delayedCall(0.5, () =>
+      {
+        gsap.to(overlayMaterial.uniforms.uAlpha, {duration: 3, value : 0})
+        loadingBarElement.classList.add('ended')
+        loadingBarElement.style.transform =''
+    })
   },
+
   (itemUrl, itemsLoaded, itemsTotal) =>{
 
-    const progressRatio =  itemsLoaded / itemsLoaded
-    loadingBarElement.style.transform = 'scaleX(0)'
+    const progressRatio =  itemsLoaded / itemsTotal
+    loadingBarElement.style.transform = `scaleX(${progressRatio})`
     console.log(progressRatio)
 
-  }
-
-)
+    }
+  )
 
 
 
@@ -758,7 +762,7 @@ chessControls.addEventListener('hoveroff', (event) => {
 
 
 
-const gridHelper = new THREE.GridHelper( 8, 8, 0x000000, 0xffffff)
+const gridHelper = new THREE.GridHelper( 8, 8, 0xffffff, 0xffffff)
 gridHelper.position.set(0,0,0)
    scene.add(gridHelper)
 
