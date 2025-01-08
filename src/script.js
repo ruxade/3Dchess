@@ -8,6 +8,10 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'
 import { fog } from 'three/src/nodes/TSL.js'
 import  CANNON  from "cannon"
 import { DragControls } from 'three/examples/jsm/controls/DragControls.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js'
+import { DotScreenPass } from 'three/examples/jsm/postprocessing/DotScreenPass.js'
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js'
 
 // -----------------------------------------
 
@@ -27,6 +31,7 @@ const gui = new dat.GUI({
   // width: 400
   // color: 'white'
 })
+//  gui.hide()
 
 // CURSOR
 const cursor = {
@@ -61,16 +66,19 @@ window.addEventListener('resize', () =>
 })
 
 
+
+
+
 // ----------------------------------------------------------------------------------
 
 // FOG
 // const fog  = new THREE.Fog( '00ffff', 15, 25) //color, near, far
 // scene.fog = fog
 const fogSettings = {
-  color: 0xcac0e5,
-  density: 0.03 // Initial density value
+  fogColor: 0xcac0e5,
+  fogDensity: 0.03 // Initial density value
 }
-const fog1 = new THREE.FogExp2( fogSettings.color, fogSettings.density )
+const fog1 = new THREE.FogExp2( fogSettings.fogColor, fogSettings.fogDensity )
 scene.fog = fog1
 
 
@@ -78,12 +86,12 @@ scene.fog = fog1
 //   fog.density = value // Update the fog density dynamically
 // })
 gui
-    .add(fogSettings, 'density', 0, 0.15, 0.01)
+    .add(fogSettings, 'fogDensity', 0, 0.15, 0.01)
     .onChange( (value) => {
       fog1.density = value
     })
 gui
-    .addColor(fogSettings, 'color')
+    .addColor(fogSettings, 'fogColor')
     .onChange( () => {
       fog1.color.set(fogSettings.color)
     })
@@ -541,14 +549,14 @@ console.log( meshGroup)
 // CAMERA
 // Base camera
 const aspectRatio = sizes.width / sizes.height
-const camera = new THREE.PerspectiveCamera(45, aspectRatio, 0.1, 100) // fov , aspect, near, far
+const camera = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100) // fov , aspect, near, far
 // ortho CAMERA
 // const camera = new THREE.OrthographicCamera(-1 * aspectRatio, 1 * aspectRatio, 1, -1, 0.1, 100)
 camera.position.x = 9
 camera.position.y = 5
 camera.position.z = 9
-// camera.lookAt(4, 4, 5)
-camera.lookAt(floor.position.x + 5)
+const lookAtTarget = new THREE.Vector3(0, 0, 0);
+camera.lookAt(lookAtTarget);
 scene.add(camera)
 const helper = new THREE.CameraHelper( camera )
 // scene.add( helper )
@@ -557,6 +565,9 @@ gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Camera X')
 // gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
 gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('camera Z')
 
+gui.add(camera, 'fov', 10, 75).name('Camera FOV').onChange(() => {
+  camera.updateProjectionMatrix();
+})
 
 
 function constrainCamera() {
@@ -571,7 +582,7 @@ function constrainCamera() {
 }
 
 
-
+gui.add(meshGroup, 'visible').name('Show Chess Pieces')
 
 // gui.hide()
 // gui.add(mesh.position, 'y').min(- 3).max(3).step(0.01).name('elevation')
@@ -709,7 +720,13 @@ const gridHalfSize = 4
 const chessControls = new DragControls(meshGroup.children, camera, renderer.domElement)
 let initialZ = 0
 // chessControls.recursive = false
+const chessControlsEnabled = {
+  enable: true
+}
 
+gui.add(chessControlsEnabled, 'enable').name('Enable Dragging').onChange(enabled => {
+  chessControls.enabled = enabled;
+})
 
 
 chessControls.addEventListener('dragstart', (event) => {
@@ -770,6 +787,42 @@ gridHelper.position.set(0,0,0)
 
 
 
+
+// POST PROCESSING
+
+const effectComposer = new EffectComposer(renderer)
+effectComposer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+effectComposer.setSize(sizes.width, sizes.height)
+
+const renderPass = new RenderPass(scene, camera)
+effectComposer.addPass(renderPass)
+
+const dotScreenPass = new DotScreenPass()
+effectComposer.addPass(dotScreenPass)
+const bloomPass = new UnrealBloomPass()
+effectComposer.addPass(bloomPass)
+
+dotScreenPass.enabled = false
+bloomPass.enabled = true
+bloomPass.strength = 0.15
+
+const guiSettings = {
+  'Dot Screen Effect': false,
+  'Bloom Effect': false,
+  'Bloom Intensity': 0.2
+}
+gui.add(guiSettings, 'Dot Screen Effect').onChange((value) => {
+  dotScreenPass.enabled = value
+})
+
+gui.add(guiSettings, 'Bloom Effect').onChange((value) => {
+  bloomPass.enabled = value
+})
+gui.add(guiSettings, 'Bloom Intensity', 0, 0.5).onChange((value) => {
+    bloomPass.strength = value; // Adjust bloom strength
+})
+
+
 // ----------------------------------------------------------------------------------
 // ANIMATE
 const clock = new THREE.Clock()
@@ -788,7 +841,7 @@ const tick = () =>
 
     // Render
     renderer.render(scene, camera)
-
+    effectComposer.render()
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }

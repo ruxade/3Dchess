@@ -57,8 +57,8 @@ body{
 
   left: 20%;
   width: 60%;
-  height: 2px;
-  background: white;
+  height: 5px;
+  background: rgb(214, 197, 236);
   transform: scaleX(0);
   transform-origin: top left;
   transition: transform 0.5s;
@@ -69,5 +69,64 @@ body{
 .loading-bar.ended{
   /* transform: scaleX(0); */
   transform-origin: top right;
+  transition: transform 1.5s ease-in-out;
+}
+
+
+
+.instructions {
+  position: fixed;
+  /* top: -120px; */
+  left: 30px;
+  background-color: rgba(133, 133, 133, 0.315);
+  color: white;
+  padding: 15px;
+  padding-left: 30px;
+  border-radius: 5px;
+  font-family: Arial, sans-serif;
+  z-index: 1000;
+  opacity: 0.9;
+  transform: translateY(-200px);
+  transition: transform 1.5s ease-in-out;
+  animation: fadeIn 8.0s forwards ease-in-out;
+  animation-delay: 0s;
+}
+
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+.instructions h4 {
+  padding-top: 20px;
+  color: rgba(236, 236, 236, 0.75);
+}
+
+.instructions img {
+  height: 1.5rem;
+
+}
+
+.instructions ul {
+  list-style: none;
+}
+
+.instructions li {
+  left: 10px;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.instructions:hover {
+  opacity: 1;
+  transform: translateY(20px);
   transition: transform 1.5s ease-in-out;
 }
