@@ -38,7 +38,7 @@ let activeScene = scene
 
 // DEBUG
 const gui = new dat.GUI({
-  // closed: true,
+  closed: true,
   width: 180
   // color: 'white'
 })
