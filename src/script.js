@@ -20,18 +20,30 @@ const canvas = document.querySelector('canvas.webgl')
 
 // Scene
 const scene = new THREE.Scene()
+const scene2 = new THREE.Scene()
 
 // AXIS HELPER
-// const axesHelper = new THREE.AxesHelper(3)
-// scene.add(axesHelper)
+const axesHelper = new THREE.AxesHelper(3)
+scene2.add(axesHelper)
+
+
+// Active Scene and Camera
+let activeScene = scene
+// let activeCamera = camera
+// let activeControls = orbitControls
+
+
+
+
 
 // DEBUG
 const gui = new dat.GUI({
   // closed: true,
-  // width: 400
+  width: 180
   // color: 'white'
 })
-//  gui.hide()
+
+
 
 // CURSOR
 const cursor = {
@@ -57,8 +69,8 @@ window.addEventListener('resize', () =>
   sizes.height = window.innerHeight
 
   // Update camera
-  camera.aspect = sizes.width / sizes.height
-  camera.updateProjectionMatrix()
+  activeCamera.aspect = sizes.width / sizes.height
+  activeCamera.updateProjectionMatrix()
 
   // Update renderer
   renderer.setSize(sizes.width, sizes.height)
@@ -68,12 +80,12 @@ window.addEventListener('resize', () =>
 
 
 
-
 // ----------------------------------------------------------------------------------
 
 // FOG
-// const fog  = new THREE.Fog( '00ffff', 15, 25) //color, near, far
-// scene.fog = fog
+// const fog2  = new THREE.Fog( '00ffff', 15, 25) //color, near, far
+// scene2.fog = fog2
+
 const fogSettings = {
   fogColor: 0xcac0e5,
   fogDensity: 0.03 // Initial density value
@@ -92,8 +104,8 @@ gui
     })
 gui
     .addColor(fogSettings, 'fogColor')
-    .onChange( () => {
-      fog1.color.set(fogSettings.color)
+    .onChange( (value) => {
+      scene.fog.color.set(value)
     })
 
 
@@ -179,84 +191,6 @@ scene.add(overlay)
 
 // ----------------------------------------------------------------------------------
 
-// BASE
-
-// const parameters = {
-//     color: 0xff0000,
-//     spin: () =>
-//     {
-//         gsap.to(mesh.rotation, 1, { y: mesh.rotation.y + Math.PI * 2 })
-//     }
-// }
-/**
- * Object
- */
-// const geometry = new THREE.BoxBufferGeometry(1, 1, 1)
-// const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
-// const mesh = new THREE.Mesh(geometry, material)
-// scene.add(mesh)
-
-// cube
-// const geometry = new THREE.BoxGeometry(1, 1, 1)
-// const material = new THREE.MeshBasicMaterial({ color: '#ff0000'})
-// const mesh = new THREE.Mesh(geometry, material)
-// scene.add(mesh)
-
-// MODELS
-// GLTF LOADER
-// const gltfLoader = new GLTFLoader()
-// console.log(gltfLoader)
-
-// gltfLoader.load(
-//   '/models/set/glTF/rook.glb',
-//   // (gltf) => {
-//   //   console.log('Model loaded successfully!')
-//   //   console.log(gltf)
-//   // },
-//   // (xhr) => {
-//   //   console.log(`Loading progress: ${xhr.loaded }`)
-//   // },
-//   // (error) => {
-//   //   console.error('Error loading model:', error)
-//   // },
-//   (gltf) => {
-//     scene.add(gltf.scene[0])
-//   }
-// )
-
-
-  // const loadAndPositionModel = (modelPath, scale, position, material) => {
-  //   fbxLoader.load(
-  //     modelPath,
-  //     (object) => {
-  //       console.log(`${modelPath} loaded successfully!`);
-
-  //       // Set the scale
-  //       object.scale.set(scale, scale, scale)
-
-  //       // Traverse and apply material
-  //       object.traverse((child) => {
-  //         if (child.isMesh) {
-  //           // child.geometry.computeVertexNormals()
-  //           child.material = material
-  //         }
-  //       })
-
-  //       // Set the position
-  //       object.position.set(position.x, position.y, position.z)
-
-  //       // Add the object to the scene
-  //       scene.add(object)
-  //     },
-  //     (xhr) => {
-  //       console.log(`Loading progress: ${(xhr.loaded / xhr.total) * 100}%`)
-  //     },
-  //     (error) => {
-  //       console.error(error)
-  //     }
-  //   )
-  // }
-
 
 // ----------------------------------------------------------------------------------
 
@@ -266,6 +200,8 @@ const textureLoader = new THREE.TextureLoader(loadingManager)
 // LIGHT and DARK
 const darkTexture = textureLoader.load('/textures/matcaps/32.png')
 const lightTexture = textureLoader.load('/textures/matcaps/17.png')
+
+const displayTexture = textureLoader.load('/textures/matcaps/26.png')
 // const boardTexture = textureLoader.load('/textures/checkerboard-8x8.png')
 // boardTexture.repeat.x = 8
 // boardTexture.repeat.y = 8
@@ -292,6 +228,12 @@ const lightMaterial = new THREE.MeshMatcapMaterial({
 })
 
 
+const displayMaterial = new THREE.MeshMatcapMaterial({
+  matcap: displayTexture,
+  // side: THREE.FrontSide,  // Set the side to render
+  flatShading: false
+})
+
 // SPHERE
 const backgroundTexture = textureLoader.load('/textures/matcaps/34.png')
 
@@ -306,12 +248,26 @@ const backgroundMaterial = new THREE.MeshMatcapMaterial({
 })
 // const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
-const backgroundGeometry = new THREE.SphereGeometry(sphereRadius, 64, 32); // A large sphere
-const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial)
-backgroundGeometry.scale(-1, 1, 1)
-backgroundMesh.position.set(0, 0, 0)
+// const backgroundGeometry = new THREE.SphereGeometry(sphereRadius, 64, 32); // A large sphere
+// const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial)
+// backgroundGeometry.scale(-1, 1, 1)
+// backgroundMesh.position.set(0, 0, 0)
 
-scene.add(backgroundMesh)
+// scene.add(backgroundMesh)
+
+function createBackgroundSphere(radius, scene) {
+  const geometry = new THREE.SphereGeometry(radius, 64, 32);
+  geometry.scale(-1, 1, 1); // Flip the sphere to have it inside-out
+  const mesh = new THREE.Mesh(geometry, backgroundMaterial);
+  mesh.position.set(0, 0, 0);
+  scene.add(mesh);
+  return mesh;
+}
+createBackgroundSphere(sphereRadius, scene)
+const displaySphere = createBackgroundSphere(sphereRadius / 3, scene2)
+
+
+
 
 // CILINDER
 const plateTexture = textureLoader.load('/textures/matcaps/6.png')
@@ -440,6 +396,7 @@ const addPieceToScene = (modelName, position, material, rotate = false) => {
   }
   scene.add(modelClone)
 
+
   meshGroup.add(modelClone)
 }
 
@@ -505,46 +462,58 @@ Object.entries(modelPaths).forEach(([modelName, modelPath]) => {
   })
 })
 
+//SCENE 2
+
+// console.log( loadedModels)
+const loadedDisplayModels = {}
+
+const positionsScene2 = [
+  { model: 'queen', position: { x: 0, y: -0.8, z: 2.5 } },
+  { model: 'bishop', position: { x: 0, y: -0.75, z: -2.5 } },
+  { model: 'rook', position: { x: 2.5, y: -0.5, z: 0 } },
+  { model: 'knight', position: { x: -2.5, y: -0.5, z: 0 } },
+
+  // { model: 'pawn', position: { x: -2.5, y: 0, z: 0 } },
+  // { model: 'king', position: { x: 3, y: 0, z: 0 } },
+
+]
+
+const loadAndAddModelToScene2 = (modelName, position) => {
+  loadModel(modelName, modelPaths[modelName], () => {
+    const modelClone = loadedModels[modelName].clone()
+
+    modelClone.scale.set(scale, scale, scale)
+    modelClone.position.set(position.x, position.y, position.z)
+    modelClone.rotation.z = Math.PI
+
+    modelClone.traverse((child) => {
+      if (child.isMesh) {
+        child.material = displayMaterial;
+      }
+    });
+
+    loadedDisplayModels[modelName] = modelClone
+    scene2.add(modelClone)
 
 
-console.log( meshGroup)
-// console.log(loadedModels)
-// console.log(Object.keys(loadedModels).length)
+    gsap.to(modelClone.rotation, {
+      z: modelClone.rotation.z - Math.PI * 2,
+      duration: 3.5,
+      repeat: -1,   // Repeat indefinitely
+      ease: "none", // Linear rotation (no easing)
+    });
 
-// BOUNDING BOX- ?
+  })
+}
 
-// const combinedBoundingBox = () => {
-//   const box = new THREE.Box3()  //  box to encompass all objects
-//   const group = new THREE.Group()
-//   scene.traverse((object) => {
-//     if (object.isMesh) {  // ignoring lights, cameras
-//       object.geometry.computeBoundingBox()
+const displayModels = ['queen', 'bishop', 'rook']
+positionsScene2.forEach(({ model, position }) => {
+  loadAndAddModelToScene2(model, position)
 
-//       box.expandByObject(object)
-//       group.add(object)
-//     }
-//   })
-//   return box
-// }
-// //  visualize the combined bounding box
-// const box = combinedBoundingBox()
-// console.log('Combined Bounding Box:', box)
-// const center = new THREE.Vector3()
-// box.getCenter(center)
-// console.log('Bounding Box Center:', center)
-// // scene.traverse((object) => {
-// //   if (object.isMesh) {
-// //     group.add(object)  // Add each object to the group
-// //   }
-// // })
-// MESH GROUP
-
-// scene.add(meshGroup)
-// meshGroup.position.set(0, 0, 0)
+})
 
 
-
-
+// ----------------------------------------------------------------------------------
 
 // CAMERA
 // Base camera
@@ -556,10 +525,38 @@ camera.position.x = 9
 camera.position.y = 5
 camera.position.z = 9
 const lookAtTarget = new THREE.Vector3(0, 0, 0);
-camera.lookAt(lookAtTarget);
+camera.lookAt(lookAtTarget)
 scene.add(camera)
-const helper = new THREE.CameraHelper( camera )
+// const helper = new TH2REE.CameraHelper( camera )
 // scene.add( helper )
+
+const lookAtQueen = new THREE.Vector3(0, 0, -5);
+const camera2 = new THREE.PerspectiveCamera(55, aspectRatio, 0.1, 100)
+camera2.position.set(0, 0, 0)
+camera2.lookAt(lookAtQueen)
+scene.add(camera2)
+// const helper2 = new THREE.CameraHelper( camera2 )
+// scene2.add( helper2 )
+
+const lookAtTarget3 = new THREE.Vector3(0, 0, 5);
+const camera3 = camera2.clone()
+
+camera3.lookAt(lookAtTarget3)
+scene.add(camera3);
+
+const lookAtTarget4 = new THREE.Vector3(5, 0, 0);
+const camera4 = camera2.clone()
+
+camera4.lookAt(lookAtTarget4)
+scene.add(camera4);
+
+
+const lookAtTarget5 = new THREE.Vector3(-5, 0, 0);
+const camera5 = camera2.clone()
+
+camera5.lookAt(lookAtTarget5)
+scene.add(camera5);
+
 
 gui.add(camera.position, 'x').min(-3).max(6).step(0.1).name('Camera X')
 // gui.add(camera.position, 'y').min(-3).max(6).step(0.1).name('Position Y')
@@ -568,6 +565,11 @@ gui.add(camera.position, 'z').min(-3).max(6).step(0.1).name('camera Z')
 gui.add(camera, 'fov', 10, 75).name('Camera FOV').onChange(() => {
   camera.updateProjectionMatrix();
 })
+
+// const geometry2 = new THREE.BoxGeometry();
+// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+// const cube = new THREE.Mesh(geometry2, material);
+// scene2.add(cube)
 
 
 function constrainCamera() {
@@ -584,94 +586,11 @@ function constrainCamera() {
 
 gui.add(meshGroup, 'visible').name('Show Chess Pieces')
 
-// gui.hide()
-// gui.add(mesh.position, 'y').min(- 3).max(3).step(0.01).name('elevation')
-// gui.add(mesh, 'visible')
-// gui.add(material, 'wireframe')
+// Active Scene and Camera
+// let activeScene = scene
+let activeCamera = camera
+// let activeControls = orbitControls
 
-// gui
-//     .addColor(parameters, 'color')
-//     .onChange(() =>
-//     {
-//         material.color.set(parameters.color)
-//     })
-
-// gui.add(parameters, 'spin')
-
-// SS----------------------------------------------------------------------------------
-// Move Obj
-
-// const raycaster = new THREE.Raycaster()
-// const mouse = new THREE.Vector2()
-// const sceneObjects = []
-// let selectedObject = null
-// let dragOffset = new THREE.Vector3()
-
-
-// //  event listeners for mouse actions
-// window.addEventListener('mousedown', onMouseDown, false)
-// window.addEventListener('mousemove', onMouseMove, false)
-// window.addEventListener('mouseup', onMouseUp, false)
-
-// function onMouseMove(event) {
-//   mouse.x = (event.clientX / sizes.width) * 2 - 1
-//   mouse.y = -(event.clientY / sizes.height) * 2 + 1
-
-//   // If dragging, update the position of the selected object
-//   if (selectedObject) {
-//       raycaster.setFromCamera(mouse, camera)
-//       const planeIntersect = raycaster.intersectObject(floor)[0]
-//       if (planeIntersect) {
-//           selectedObject.position.x = planeIntersect.point.x + dragOffset.x
-//           selectedObject.position.z = planeIntersect.point.z + dragOffset.z
-//       }
-//   }
-// }
-
-// function onMouseDown(event) {
-//   // Perform raycasting to detect object under mouse
-//   raycaster.setFromCamera(mouse, camera)
-//   const intersects = raycaster.intersectObjects(scene.children, true)
-
-//   if (intersects.length > 0) {
-//       const intersectedObject = intersects[0].object
-
-//       // Check if the clicked object is a chess piece
-//       if (intersectedObject.parent && intersectedObject.parent.isGroup) {
-//           selectedObject = intersectedObject.parent
-
-//           // Calculate offset to keep piece aligned while dragging
-//           raycaster.setFromCamera(mouse, camera)
-//           const planeIntersect = raycaster.intersectObject(floor)[0];
-//           if (planeIntersect) {
-//               dragOffset.set(
-//                   selectedObject.position.x - planeIntersect.point.x,
-//                   0,
-//                   selectedObject.position.z - planeIntersect.point.z
-//               )
-//           }
-//       }
-//   }
-// }
-
-// function onMouseUp(event) {
-//   // Release the selected object
-//   if (selectedObject) {
-//       // Snap the piece to the closest square
-//       selectedObject.position.x = Math.round(selectedObject.position.x)
-//       selectedObject.position.z = Math.round(selectedObject.position.z)
-
-//       selectedObject = null // Deselect
-//   }
-// }
-
-
-
-// function onMouseClick(event) {
-//   // Convert mouse click position to normalized device coordinates (-1 to +1) for raycasting
-//   mouse.x = (event.clientX / window.innerWidth) * 2 - 1
-//   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1
-// }
 
 
 // ----------------------------------------------------------------------------------
@@ -683,16 +602,6 @@ gui.add(meshGroup, 'visible').name('Show Chess Pieces')
 
 
 
-
-// ----------------------------------------------------------------------------------
-// Controls
-const orbitControls = new OrbitControls(camera, canvas)
-orbitControls.enableDamping = true
-orbitControls.dampingFactor = 0.25
-orbitControls.maxPolarAngle = Math.PI / 2
-
-// controls.attach(object)
-// scene.add(controls)
 
 // ----------------------------------------------------------------------------------
 // RENDERER
@@ -710,7 +619,58 @@ window.addEventListener('dblclick', () => {
       document.exitFullscreen()
   }
 })
+// ----------------------------------------------------------------------------------
+// Controls
+const orbitControls = new OrbitControls(camera, canvas)
+orbitControls.enableDamping = true
+orbitControls.dampingFactor = 0.25
+orbitControls.maxPolarAngle = Math.PI / 2
 
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let selectedObject = null;
+let intersectionPoint = new THREE.Vector3();
+
+canvas.addEventListener('mousedown', (event) => {
+  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  // Cast a ray to detect intersected objects
+  raycaster.setFromCamera(pointer, activeCamera);
+  const intersects = raycaster.intersectObjects(
+    Object.values(loadedDisplayModels).flatMap(model => model.children),
+    true
+  );
+
+  if (intersects.length > 0) {
+    selectedObject = intersects[0].object;
+    intersectionPoint.copy(intersects[0].point);
+
+    // Adjust pivot by translating geometry
+    const pivotOffset = new THREE.Vector3().copy(intersectionPoint).sub(selectedObject.position);
+    selectedObject.geometry.translate(-pivotOffset.x, -pivotOffset.y, -pivotOffset.z);
+
+    // Update the position to match the intersection point
+    selectedObject.position.add(pivotOffset);
+  }
+});
+
+canvas.addEventListener('mousemove', (event) => {
+  if (!selectedObject) return;
+
+  // Rotate object around its dynamically updated pivot
+  const deltaX = event.movementX * 0.01; // Adjust sensitivity
+  const deltaY = event.movementY * 0.01;
+
+  selectedObject.rotation.x += deltaY; // Rotate around X-axis
+  selectedObject.rotation.z += deltaX; // Rotate around Z-axis
+});
+
+canvas.addEventListener('mouseup', () => {
+  selectedObject = null; // Deselect the object on mouse up
+});
+// scene.add(controls)
 
 // ----------------------------------------------------------------------------------
 
@@ -733,7 +693,7 @@ chessControls.addEventListener('dragstart', (event) => {
 
   orbitControls.enabled = false
 
-  console.log('Drag started', event)
+  // console.log('Drag started', event)
 
 })
 
@@ -765,7 +725,7 @@ chessControls.addEventListener('drag', (event) => {
 chessControls.addEventListener('dragend', (event) => {
   orbitControls.enabled = true
 
-  console.log('Drag ended', event)
+  // console.log('Drag ended', event)
 })
 
 chessControls.addEventListener('hoveron', (event) => {
@@ -787,6 +747,7 @@ gridHelper.position.set(0,0,0)
 
 
 
+// ----------------------------------------------------------------------------------
 
 // POST PROCESSING
 
@@ -808,7 +769,7 @@ bloomPass.strength = 0.15
 
 const guiSettings = {
   'Dot Screen Effect': false,
-  'Bloom Effect': false,
+  'Bloom Effect': true,
   'Bloom Intensity': 0.2
 }
 gui.add(guiSettings, 'Dot Screen Effect').onChange((value) => {
@@ -824,6 +785,44 @@ gui.add(guiSettings, 'Bloom Intensity', 0, 0.5).onChange((value) => {
 
 
 // ----------------------------------------------------------------------------------
+
+// Active Scene and Camera
+
+let activeControls = orbitControls
+
+
+// Scene Switching
+const cameraSceneMap = {
+  '1': { camera: camera, scene: scene, controlsEnabled: true },
+  '2': { camera: camera2, scene: scene2, controlsEnabled: false },
+  '3': { camera: camera3, scene: scene2, controlsEnabled: false },
+  '4': { camera: camera4, scene: scene2, controlsEnabled: false },
+  '5': { camera: camera5, scene: scene2, controlsEnabled: false },
+};
+
+// Event listener for keydown
+window.addEventListener('keydown', (event) => {
+  const config = cameraSceneMap[event.key];
+
+  if (config) {
+    activeCamera = config.camera;
+    activeScene = config.scene;
+    orbitControls.enabled = config.controlsEnabled; // Enable or disable controls dynamically
+    console.log(`Switching to Camera ${event.key}`);
+    updateGUIVisibility();
+  }
+});
+
+
+
+function updateGUIVisibility() {
+  if (activeScene === scene2) {
+    gui.hide()
+  } else {
+    gui.show()
+  }
+}
+// ----------------------------------------------------------------------------------
 // ANIMATE
 const clock = new THREE.Clock()
 
@@ -831,17 +830,33 @@ const tick = () =>
 {
 
     // Update controls
-    orbitControls.update()
-    chessControls.update()
-    if (camera.position.y < 0) {
-      camera.position.y = 0; // Prevent going below y = 0
-  }
+    if (activeControls) {
+        activeControls.update(); // Only  the active controls
+    }
 
-  constrainCamera()
+    if (activeScene === scene) {
+        if (camera.position.y < 0) {
+            camera.position.y = 0 // Prevent going below y = 0
+        }
+        chessControls.update()
+        constrainCamera()
+        // renderer.render(scene, camera)
+        effectComposer.render()
+
+
+      } else if (activeScene === scene2) {
+        // Render Scene 2 normally
+        renderer.render(scene2, activeCamera)
+    }
+
+
+
 
     // Render
-    renderer.render(scene, camera)
-    effectComposer.render()
+
+
+
+
     // Call tick again on the next frame
     window.requestAnimationFrame(tick)
 }

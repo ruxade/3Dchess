@@ -34,16 +34,22 @@ body{
   font-size: 2rem;
   color: #fff;
   font-family: Arial, sans-serif;
-  animation: fadeOut 3.0s forwards ease-in-out;
+  animation: fadeOut 3.5s forwards ease-in-out;
 }
 @keyframes fadeOut {
   0% {
     opacity: 1;
+   }
+  99% {
+    opacity: 0;
+    transform: scaleX(0);
   }
   100% {
-    opacity: 0;
+
+    transform: scaleX(0);
   }
 }
+
 .loading-text img {
   display: block;
   margin: 10px auto 0;
