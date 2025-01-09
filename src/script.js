@@ -627,49 +627,49 @@ orbitControls.dampingFactor = 0.25
 orbitControls.maxPolarAngle = Math.PI / 2
 
 
-const raycaster = new THREE.Raycaster();
-const pointer = new THREE.Vector2();
-let selectedObject = null;
-let intersectionPoint = new THREE.Vector3();
+// const raycaster = new THREE.Raycaster();
+// const pointer = new THREE.Vector2();
+// let selectedObject = null;
+// let intersectionPoint = new THREE.Vector3();
 
-canvas.addEventListener('mousedown', (event) => {
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+// canvas.addEventListener('mousedown', (event) => {
+//   pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+//   pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-  // Cast a ray to detect intersected objects
-  raycaster.setFromCamera(pointer, activeCamera);
-  const intersects = raycaster.intersectObjects(
-    Object.values(loadedDisplayModels).flatMap(model => model.children),
-    true
-  );
+//   // Cast a ray to detect intersected objects
+//   raycaster.setFromCamera(pointer, activeCamera);
+//   const intersects = raycaster.intersectObjects(
+//     Object.values(loadedDisplayModels).flatMap(model => model.children),
+//     true
+//   );
 
-  if (intersects.length > 0) {
-    selectedObject = intersects[0].object;
-    intersectionPoint.copy(intersects[0].point);
+//   if (intersects.length > 0) {
+//     selectedObject = intersects[0].object;
+//     intersectionPoint.copy(intersects[0].point);
 
-    // Adjust pivot by translating geometry
-    const pivotOffset = new THREE.Vector3().copy(intersectionPoint).sub(selectedObject.position);
-    selectedObject.geometry.translate(-pivotOffset.x, -pivotOffset.y, -pivotOffset.z);
+//     // Adjust pivot by translating geometry
+//     const pivotOffset = new THREE.Vector3().copy(intersectionPoint).sub(selectedObject.position);
+//     selectedObject.geometry.translate(-pivotOffset.x, -pivotOffset.y, -pivotOffset.z);
 
-    // Update the position to match the intersection point
-    selectedObject.position.add(pivotOffset);
-  }
-});
+//     // Update the position to match the intersection point
+//     selectedObject.position.add(pivotOffset);
+//   }
+// });
 
-canvas.addEventListener('mousemove', (event) => {
-  if (!selectedObject) return;
+// canvas.addEventListener('mousemove', (event) => {
+//   if (!selectedObject) return;
 
-  // Rotate object around its dynamically updated pivot
-  const deltaX = event.movementX * 0.01; // Adjust sensitivity
-  const deltaY = event.movementY * 0.01;
+//   // Rotate object around its dynamically updated pivot
+//   const deltaX = event.movementX * 0.01; // Adjust sensitivity
+//   const deltaY = event.movementY * 0.01;
 
-  selectedObject.rotation.x += deltaY; // Rotate around X-axis
-  selectedObject.rotation.z += deltaX; // Rotate around Z-axis
-});
+//   selectedObject.rotation.x += deltaY; // Rotate around X-axis
+//   selectedObject.rotation.z += deltaX; // Rotate around Z-axis
+// });
 
-canvas.addEventListener('mouseup', () => {
-  selectedObject = null; // Deselect the object on mouse up
-});
+// canvas.addEventListener('mouseup', () => {
+//   selectedObject = null; // Deselect the object on mouse up
+// });
 // scene.add(controls)
 
 // ----------------------------------------------------------------------------------
