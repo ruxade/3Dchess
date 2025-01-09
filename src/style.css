@@ -53,8 +53,12 @@ body{
 .loading-text img {
   display: block;
   margin: 10px auto 0;
-  width: 100px;
+  width: 80px;
   height: auto;
+}
+.loading-text p {
+  size: 1rem;
+  height:20px;
 }
 
 .loading-bar{
