@@ -168,6 +168,10 @@ scene.add(overlay)
 
 
 
+
+
+
+
 // LIGHTS
 // const ambientLight = new THREE.AmbientLight(0xffffff, 0.5) // Color, intensity
 // gui.add(ambientLight, 'intensity').min(0).max(1).step(0.1)

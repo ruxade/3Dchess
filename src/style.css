@@ -101,6 +101,8 @@ body{
   transition: transform 1.5s ease-in-out;
   animation: fadeIn 8.0s forwards ease-in-out;
   animation-delay: 0s;
+  /* max-width: 30%;
+  overflow: hidden; */
 }
 
 
