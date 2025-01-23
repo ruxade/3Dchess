@@ -33,16 +33,12 @@ let activeScene = scene
 // let activeControls = orbitControls
 
 
-
-
-
 // DEBUG
 const gui = new dat.GUI({
   closed: true,
   width: 180
   // color: 'white'
 })
-
 
 
 // CURSOR
@@ -94,9 +90,7 @@ const fog1 = new THREE.FogExp2( fogSettings.fogColor, fogSettings.fogDensity )
 scene.fog = fog1
 
 
-// gui.add(fogSettings.density, 0, 1, 0.01).onChange((value) => {
-//   fog.density = value // Update the fog density dynamically
-// })
+
 gui
     .add(fogSettings, 'fogDensity', 0, 0.15, 0.01)
     .onChange( (value) => {
@@ -166,37 +160,6 @@ const overlay = new THREE.Mesh(overlayGeometry, overlayMaterial)
 scene.add(overlay)
 
 
-
-
-
-
-
-
-// LIGHTS
-// const ambientLight = new THREE.AmbientLight(0xffffff, 0.5) // Color, intensity
-// gui.add(ambientLight, 'intensity').min(0).max(1).step(0.1)
-// scene.add(ambientLight)
-
-// const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6)
-// directionalLight.position.set(4, 4, 0)
-
-// gui.add(directionalLight, 'intensity').min(0).max(1).step(0.1)
-
-// scene.add(directionalLight)
-
-// const directionalLightHelper = new THREE.DirectionalLightHelper(directionalLight, 1)
-// scene.add(directionalLightHelper)
-
-// const pointLight = new THREE.PointLight(0xffffff, 10, 100); // Color, intensity, distance
-// pointLight.position.set(5, 5, 5)
-// scene.add(pointLight)
-
-// const pointLightHelper = new THREE.PointLightHelper(pointLight, 1) // POINT LIGHT HELPER
-// scene.add(pointLightHelper)
-
-// ----------------------------------------------------------------------------------
-
-
 // ----------------------------------------------------------------------------------
 
 // TEXTURES and MATERIALS
@@ -251,14 +214,7 @@ const backgroundMaterial = new THREE.MeshMatcapMaterial({
   // roughness: 0.9,
   // metalness: 0.1
 })
-// const boardMaterial = new THREE.MeshBasicMaterial({map : boardTexture})
 
-// const backgroundGeometry = new THREE.SphereGeometry(sphereRadius, 64, 32); // A large sphere
-// const backgroundMesh = new THREE.Mesh(backgroundGeometry, backgroundMaterial)
-// backgroundGeometry.scale(-1, 1, 1)
-// backgroundMesh.position.set(0, 0, 0)
-
-// scene.add(backgroundMesh)
 
 function createBackgroundSphere(radius, scene) {
   const geometry = new THREE.SphereGeometry(radius, 64, 32);
