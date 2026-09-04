@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Chess</title>
+  <link rel="icon" href="/knight.png">
+</head>
+<body>
+  <canvas class="webgl"></canvas>
+
+  <div class="loading-bar"></div>
+  <div class="loading-text">
+    <img src="/board-games.png" alt="">
+    <p>Loading</p>
+  </div>
+
+  <div id="instructions" class="instructions">
+    <ul>
+      <li><img src="/icons/icons8-left-click-48.png" alt="Left click"> Left click and drag to rotate the scene</li>
+      <li><img src="/icons/icons8-middleclick-48.png" alt="Scroll"> Scroll to zoom in and out</li>
+      <li><img src="/icons/icons8-left-click-48.png" alt="Right click" class="mirrored"> Right click and drag to pan the scene</li>
+      <li><img src="/icons/icons8-left-click-48.png" alt="Left click"> Click and drag a piece to move it</li>
+      <li><img src="/board-games.png" alt=""> Press H to hide the settings</li>
+      <li>
+        <strong>Cameras:</strong>
+        <span class="camera-key" data-camera="1">1</span>
+        <span class="camera-key" data-camera="2">2</span>
+        <span class="camera-key" data-camera="3">3</span>
+        <span class="camera-key" data-camera="4">4</span>
+        <span class="camera-key" data-camera="5">5</span>
+      </li>
+    </ul>
+    <h4>Controls</h4>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

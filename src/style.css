@@ -1,29 +1,23 @@
-*
-{
-    margin: 0;
-    padding: 0;
+* {
+  margin: 0;
+  padding: 0;
 }
 
 html,
-body{
+body {
   background: rgb(7, 7, 7);
-
-    overflow: hidden;
-}
-
-.webgl{
-    position: fixed;
-    top: 0;
-    left: 0;
-    outline: none;
-}
-
-.dg .ac {
-  background: #333 ;
-  color: #b41b1b;
+  overflow: hidden;
   font-family: Arial, sans-serif;
-  border: 1px solid #555;
 }
+
+.webgl {
+  position: fixed;
+  top: 0;
+  left: 0;
+  outline: none;
+}
+
+/* ---- loading ---- */
 
 .loading-text {
   position: absolute;
@@ -33,21 +27,12 @@ body{
   text-align: center;
   font-size: 2rem;
   color: #fff;
-  font-family: Arial, sans-serif;
-  animation: fadeOut 3.5s forwards ease-in-out;
+  transition: opacity 1.5s ease-in-out;
 }
-@keyframes fadeOut {
-  0% {
-    opacity: 1;
-   }
-  99% {
-    opacity: 0;
-    transform: scaleX(0);
-  }
-  100% {
 
-    transform: scaleX(0);
-  }
+.loading-text.ended {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .loading-text img {
@@ -56,15 +41,10 @@ body{
   width: 80px;
   height: auto;
 }
-.loading-text p {
-  size: 1rem;
-  height:20px;
-}
 
-.loading-bar{
+.loading-bar {
   position: absolute;
   top: 50%;
-
   left: 20%;
   width: 60%;
   height: 10px;
@@ -76,46 +56,33 @@ body{
   will-change: transform;
 }
 
-
-.loading-bar.ended{
-  /* transform: scaleX(0); */
+.loading-bar.ended {
   transform-origin: top right;
   transition: transform 1.5s ease-in-out;
 }
 
-
+/* ---- instructions panel (slides down on hover) ---- */
 
 .instructions {
   position: fixed;
-  /* top: -120px; */
   left: 30px;
   background-color: rgba(133, 133, 133, 0.315);
   color: white;
-  padding: 15px;
-  padding-left: 30px;
+  padding: 15px 15px 15px 30px;
   border-radius: 5px;
-  font-family: Arial, sans-serif;
   z-index: 1000;
-  opacity: 0.9;
+  opacity: 0;
   transform: translateY(-200px);
-  transition: transform 1.5s ease-in-out;
-  animation: fadeIn 8.0s forwards ease-in-out;
-  animation-delay: 0s;
-  /* max-width: 30%;
-  overflow: hidden; */
+  transition: transform 1.5s ease-in-out, opacity 1.5s ease-in-out;
 }
 
+body.ready .instructions {
+  opacity: 0.9;
+}
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+.instructions:hover {
+  opacity: 1;
+  transform: translateY(20px);
 }
 
 .instructions h4 {
@@ -125,23 +92,34 @@ body{
   justify-content: space-evenly;
 }
 
-.instructions img {
-  height: 1.5rem;
-
-}
-
 .instructions ul {
   list-style: none;
 }
 
 .instructions li {
-  left: 10px;
   font-size: 1rem;
   margin-bottom: 10px;
 }
 
-.instructions:hover {
-  opacity: 1;
-  transform: translateY(20px);
-  transition: transform 1.5s ease-in-out;
+.instructions img {
+  height: 1.5rem;
+  vertical-align: middle;
+}
+
+.instructions img.mirrored {
+  transform: scaleX(-1);
+}
+
+.camera-key {
+  display: inline-block;
+  background: #70707057;
+  padding: 2px 7px;
+  border-radius: 4px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+
+.camera-key.active {
+  background: rgb(214, 197, 236);
+  color: #111;
 }
