@@ -16,6 +16,10 @@ import { createMainCamera } from './controls/cameras.js'
 import { createDragControls } from './controls/drag.js'
 import { createViews } from './controls/views.js'
 import { createPhysics } from './physics/world.js'
+import { createHighlights } from './scene/highlights.js'
+import { createRules } from './chess/rules.js'
+import { createGameController } from './chess/controller.js'
+import { createStatus } from './ui/status.js'
 import { createGui } from './debug/gui.js'
 
 // ---- 1. Scene -------------------------------------------------------------
@@ -41,7 +45,7 @@ const { render, passes } = createRenderer(canvas, scene, mainCamera.camera)
 enableFullscreenOnDoubleClick(canvas)
 
 const settings = { dragging: true }                         // user toggles live here
-const dragControls = createDragControls(pieces, mainCamera.camera, canvas, mainCamera.controls)
+const dragControls = createDragControls(mainCamera.camera, canvas, mainCamera.controls)
 const physics = createPhysics()                             // empty world, ready to use
 
 const gui = createGui({ scene, camera: mainCamera.camera, passes, pieces, dragControls, settings })
@@ -59,11 +63,19 @@ onResize(({ width, height }) => {
   showcase.setAspect(width / height)
 })
 
-// ---- 3. Load the pieces (async) -------------------------------------------
+// ---- 3. Load the pieces, then start the game (async) ----------------------
+const rules = createRules()                                 // chess.js behind a small API
+const highlights = createHighlights(scene)                  // legal-move markers
+const status = createStatus()                               // "White to move" line
+
 loadPieceGeometries(loading.manager)
   .then((geometries) => {
     createPieceSet(geometries, materials, pieces)
     showcase.populate(geometries)
+    const game = createGameController({ rules, pieces, geometries, materials, highlights, status, dragControls })
+    dragControls.setHandlers(game)                          // drag asks the game what is allowed
+    // Poke at the game from the browser console: chess.rules.fen(), chess.pieces.children, ...
+    window.chess = { rules, pieces, camera: mainCamera.camera, game, dragControls }
   })
   .catch((error) => console.error('Could not load the chess set:', error))
 

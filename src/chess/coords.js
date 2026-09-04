@@ -41,3 +41,8 @@ export function isDarkSquare(col, row) {
 function clamp(n) {
   return Math.min(BOARD.size - 1, Math.max(0, n))
 }
+
+/** 'e4' back to { col: 4, row: 3 }. */
+export function nameToSquare(name) {
+  return { col: FILES.indexOf(name[0]), row: Number(name[1]) - 1 }
+}

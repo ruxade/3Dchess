@@ -123,3 +123,34 @@ body.ready .instructions {
   background: rgb(214, 197, 236);
   color: #111;
 }
+
+/* ---- game status ---- */
+
+.status {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: rgba(20, 16, 30, 0.45);
+  color: #fff;
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  opacity: 0;
+  transition: opacity 1.5s ease-in-out, background 0.3s;
+  pointer-events: none;
+}
+
+body.ready .status {
+  opacity: 1;
+}
+
+.status[data-tone="alert"] {
+  background: rgba(255, 122, 69, 0.75);
+}
+
+.status[data-tone="end"] {
+  background: rgba(214, 197, 236, 0.9);
+  color: #1a1424;
+}

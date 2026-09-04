@@ -9,7 +9,11 @@ and the job is in the first comment of the file.
 | --- | --- | --- |
 | `src/main.js` | Wiring. Builds everything, starts the loop. | Add a new module to the app |
 | `src/config.js` | Every tunable number and asset path. | Change a colour, size, speed, path |
-| `src/chess/coords.js` | Square (col, row) to world (x, z) and back. | Add chess rules, move validation |
+| `src/chess/coords.js` | Square (col, row) to world (x, z) and back, 'e4' names. | Change board geometry maths |
+| `src/chess/rules.js` | The rules (chess.js behind a five-function API). | Change promotion, add variants |
+| `src/chess/controller.js` | Applies a legal move to the meshes: capture, castle, promote, bounce back. | Change what a move looks like |
+| `src/scene/highlights.js` | Legal-move markers on the board. | Change the markers |
+| `src/ui/status.js` | The "White to move" line. | Change messages |
 | `src/core/sizes.js` | Viewport size, resize event. | Nothing usually |
 | `src/core/loading.js` | Progress bar, black fade overlay. | Change the intro |
 | `src/core/renderer.js` | WebGLRenderer, post-processing passes. | Add a visual effect (bloom, blur, colour grading) |
@@ -19,7 +23,7 @@ and the job is in the first comment of the file.
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
 | `src/scene/showcase.js` | Spinning pieces for camera views 2 to 5. | Change the showcase |
 | `src/controls/cameras.js` | Main camera, OrbitControls. | Change how the camera moves |
-| `src/controls/drag.js` | Drag a piece, snap to a square. | Change how moving pieces feels |
+| `src/controls/drag.js` | Carry a piece above the board, hand the drop to the controller. | Change how carrying feels |
 | `src/controls/views.js` | Keys 1 to 5, key H. | Add a view or a shortcut |
 | `src/physics/world.js` | cannon-es world (ground only so far). | Add physics |
 | `src/debug/gui.js` | The Settings panel (lil-gui). | Expose a new slider |
@@ -40,6 +44,34 @@ and the job is in the first comment of the file.
    flattened into six geometries, then 32 meshes are placed. Meanwhile the
    loading bar fills from `LoadingManager` callbacks.
 4. **Frame loop.** `tick()` runs about 60 times per second.
+
+## 2b. What happens when you move a piece
+
+```
+pointer down on a piece          DragControls raycasts, fires dragstart
+  drag.js                        sets the carry plane to the click height, remembers the grab offset,
+                                 calls controller.onPickUp(piece)
+  controller.onPickUp            asks rules.legalMoves('e2'), highlights.show(...)
+pointer moves                    DragControls fires drag
+  drag.js                        raycasts to the carry plane, sets piece to (x, liftHeight, z),
+                                 calls controller.onCarry(piece, square)
+  controller.onCarry             highlights.setTarget(square, legal?) under the piece
+pointer up                       DragControls fires dragend
+  drag.js                        worldToSquare(x, z), calls controller.onDrop(piece, square)
+  controller.onDrop              rules.move('e2', 'e4')
+       illegal -> null           flyTo(piece, 'e2'): bounce back
+       legal   -> description    settle(piece), capture(...), castle rook, promote
+                                 refreshDraggable(): only the other side is grabbable now
+                                 status.fromRules(): "Black to move", "Check!", "Checkmate..."
+```
+
+Two things keep pieces from overlapping: a carried piece is held at
+`DRAG.liftHeight` (above the tallest piece), and a drop is only accepted when
+the rules accept it, so a friendly piece can never be landed on and a captured
+one leaves the square before the capturer settles.
+
+`window.chess` exposes `rules`, `pieces`, `camera` and `game` in the browser
+console. Try `chess.rules.fen()` or `chess.game.reset()`.
 
 ## 3. One frame
 
@@ -64,9 +96,9 @@ so they do not appear here.
   (with squareSize 1). `coords.js` does this maths so nobody else has to.
 * White (light matcap) starts on rows 0 and 1, black on rows 6 and 7.
   Black pieces are rotated `Math.PI` around y so knights face the enemy.
-* Every piece carries `userData = { type, colour, col, row }`. That is the
-  whole game state today. A real rules engine would replace it with a proper
-  board model and keep the meshes as a view of it.
+* Every piece carries `userData = { type, colour, col, row }` so the 3D side
+  knows where it stands. The *truth* about the game lives in `rules.js`
+  (chess.js). After every move `controller.js` makes the meshes agree with it.
 
 ## 5. Why a piece is a single Mesh
 
@@ -141,12 +173,18 @@ Ranked by payoff for effort. Each one lives in one file.
 3. **Camera choreography** (`controls/cameras.js`). Intro flythrough with GSAP
    on `camera.position` while the overlay fades; a "look at the piece I am
    holding" nudge during drag.
-4. **Captures** (`controls/drag.js` plus a new `scene/effects.js`). When a piece
-   lands on an occupied square, the captured piece gets a physics body and is
-   knocked off the board. This is where physics pays for itself.
+4. **Captures with physics** (`chess/controller.js`, `capture()`). Today a
+   captured piece glides to the graveyard with GSAP. Replace that with a
+   physics body and a shove from the capturer. This is where physics pays for itself.
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
    vignette, depth of field for the showcase views.
+
+## 7b. Tests
+
+`npm test` runs Vitest on the two pure modules: `coords.js` (square maths) and
+`rules.js` (the chess.js translation, including en passant, castling,
+promotion and checkmate). Everything that touches WebGL is checked by eye.
 
 ## 8. Performance note
 

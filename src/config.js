@@ -77,3 +77,21 @@ export const LOADING = {
   fadeDelay: 0.5,    // seconds to wait after the last asset lands
   fadeDuration: 3    // seconds for the black overlay to fade out
 }
+
+export const DRAG = {
+  liftHeight: 2.0,       // taller than the king (1.83), so a carried piece clears everything
+  snapSeconds: 0.2,      // settle onto the square after release
+  returnSeconds: 0.45    // fly back after an illegal drop
+}
+
+export const GRAVEYARD = {
+  firstColumnX: 5.5,     // captured pieces line up beside the board, two columns per side
+  columnGap: 1,
+  perColumn: 8
+}
+
+export const HIGHLIGHT = {
+  move: 0xffffff,
+  capture: 0xff7a45,
+  origin: 0xcac0e5
+}
