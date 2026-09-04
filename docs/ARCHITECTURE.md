@@ -11,12 +11,18 @@ and the job is in the first comment of the file.
 | `src/config.js` | Every tunable number and asset path. | Change a colour, size, speed, path |
 | `src/chess/coords.js` | Square (col, row) to world (x, z) and back, 'e4' names. | Change board geometry maths |
 | `src/chess/rules.js` | The rules (chess.js behind a five-function API). | Change promotion, add variants |
-| `src/chess/controller.js` | Applies a legal move to the meshes: capture, castle, promote, bounce back. | Change what a move looks like |
+| `src/chess/controller.js` | Applies moves to the meshes, runs the computer, undo by resync. | Change what a move looks like |
+| `src/chess/engine.js` | The computer opponent: three levels, pure functions on a FEN. | Make it stronger or weaker |
+| `src/chess/engine.worker.js` | Runs the engine off the main thread. | Nothing usually |
+| `src/chess/opponent.js` | Asks the worker for a move, returns a Promise. | Change thinking time |
+| `src/scene/effects.js` | Particle puffs on knocks and impacts. | Add effects |
 | `src/scene/highlights.js` | Legal-move markers on the board. | Change the markers |
 | `src/ui/status.js` | The "White to move" line. | Change messages |
 | `src/ui/palette.js` | Colour panel: slots, swatches, presets, localStorage. | Add a preset, a slot |
 | `src/ui/help.js` | The controls panel toggle. | Nothing usually |
 | `src/ui/gallery.js` | Gallery bar: names, arrows, caption, back. | Change captions (config PIECE_INFO) |
+| `src/ui/moves.js` | Move list, Undo and New buttons. | Change the list |
+| `src/ui/promotion.js` | "Promote to" chooser. | Nothing usually |
 | `tools/decimate.py` | Blender script: FBX sources to light .glb files. | Re-export after editing a model |
 | `src/core/sizes.js` | Viewport size, resize event. | Nothing usually |
 | `src/core/loading.js` | Progress bar, black fade overlay. | Change the intro |
@@ -76,7 +82,15 @@ pointer up                       DragControls fires dragend
 ```
 
 Hovering a grabbable piece lifts it a little (onHover). Every settled piece
-tells physics.follow() where its body now stands.
+tells physics.follow() where its body now stands. A pawn dropped on the last
+rank pauses at `promotionUi.ask()` until you pick a piece (or Escape to cancel).
+
+**Undo** (key U) does not replay moves backwards. It calls `rules.undo()` and
+then `syncFromRules()`: compare what the rules say is on each square with the
+meshes, keep the ones already right, fly the others where they belong, bring a
+knocked piece back from the plate (upright, static again), swap a promoted
+queen back into a pawn, and knock off anything that should not be there. The
+same function powers `chess.game.load(fen)` from the console.
 
 Two things keep pieces from overlapping: a carried piece is held at
 `DRAG.liftHeight` (above the tallest piece), and a drop is only accepted when
@@ -174,20 +188,51 @@ Ranked by payoff for effort. Each one lives in one file.
 2. **Real lighting** (`scene/materials.js`). Swap `MeshMatcapMaterial` for
    `MeshStandardMaterial` plus an environment map from `RoomEnvironment`, turn
    on shadows. The palette panel would then pick colours instead of matcaps.
-3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The camera already
-   glides behind the player to move. Next: an intro flythrough while the overlay
-   fades, and a gentle "look at the piece I am holding" nudge during a drag.
-4. **Captures** (`chess/controller.js`, `capture()`). Done with physics. Next:
-   a little dust puff or a flash on impact (`scene/effects.js`, particles).
+3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The intro flight
+   and the glide behind the player to move are in. Next: a gentle "look at the
+   piece I am holding" nudge during a drag.
+4. **Captures** (`chess/controller.js`, `capture()`). Done with physics and a
+   particle puff. Next: a camera shake on a heavy impact, or a slow-motion beat.
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
    vignette, depth of field for the gallery.
 
+## 6b. The computer opponent (Settings, Game, "computer plays")
+
+`chess/engine.js` is pure: a FEN string in, `{ from, to, promotion }` out. It
+runs in a Web Worker (`engine.worker.js`) so the board never stutters while it
+thinks, and inline in tests. Scores are centipawns, positive for the side to move.
+
+1. **Beginner.** A random legal move. Half the time, if a capture exists, it
+   takes one. Ten lines.
+2. **Casual.** One move ahead. Each move is scored: what it captures, whether
+   it gives check, whether it promotes, minus 90 percent of the most valuable
+   piece the opponent could take straight back. Plus a little noise so games
+   differ. This is "do not hang pieces" without any search.
+3. **Club.** Negamax with alpha-beta pruning, captures searched first so the
+   pruning bites, a quiescence search at the horizon so it never stops halfway
+   through an exchange, and iterative deepening (depth 1, then 2, 3, 4) inside
+   a time budget (`OPPONENT.thinkBudgetMs`). The evaluation is material plus a
+   small bonus for pieces near the centre and pawns that have advanced.
+
+The controller asks after every human move (`computerMove()`), waits at least
+`OPPONENT.minReplyMs` so the answer reads as a move and not a glitch, then feeds
+the reply through the same `commit()` path as a human move: the piece flies,
+captures knock, the move list updates. Undo takes back both the computer's move
+and yours. "you play" swaps colours: as black, the computer opens.
+
+To make it stronger: better piece-square tables (search "PeSTO"), a
+transposition table, and king safety in the evaluation. To make it faster:
+chess.js spends most of its time building SAN strings, so a move generator of
+your own would be the big win.
+
 ## 7b. Tests
 
-`npm test` runs Vitest on the two pure modules: `coords.js` (square maths) and
-`rules.js` (the chess.js translation, including en passant, castling,
-promotion and checkmate). Everything that touches WebGL is checked by eye.
+`npm test` runs Vitest on the pure modules: `coords.js` (square maths),
+`rules.js` (the chess.js translation: en passant, castling, promotion, undo,
+checkmate), `physics/world.js` (a knocked piece leaves the board and arcs over
+a bystander) and `engine.js` (legal moves, free queen taken, mate in one
+found). Everything that touches WebGL is checked by eye.
 
 ## 8. Models and performance
 

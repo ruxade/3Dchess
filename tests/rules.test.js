@@ -13,7 +13,7 @@ describe('rules', () => {
     const rules = createRules()
     expect(rules.legalMoves('e2').map((m) => m.to).sort()).toEqual(['e3', 'e4'])
     rules.move('e2', 'e4'); rules.move('d7', 'd5')
-    expect(rules.legalMoves('e4')).toContainEqual({ to: 'd5', capture: true })
+    expect(rules.legalMoves('e4')).toContainEqual({ to: 'd5', capture: true, promotion: false })
   })
 
   it('rejects illegal moves and keeps the turn', () => {
@@ -41,10 +41,23 @@ describe('rules', () => {
     expect(rules.move('e1', 'g1')).toMatchObject({ castle: { from: 'h1', to: 'f1' } })
   })
 
-  it('promotes to a queen', () => {
+  it('promotes to a queen by default, or to what you ask for', () => {
     const rules = createRules('8/P7/8/8/8/8/8/k6K w - - 0 1')
+    expect(rules.legalMoves('a7')).toEqual([{ to: 'a8', capture: false, promotion: true }])
     expect(rules.move('a7', 'a8')).toMatchObject({ promotion: 'queen' })
     expect(rules.pieceAt('a8')).toEqual({ type: 'queen', colour: 'light' })
+    rules.undo()
+    expect(rules.move('a7', 'a8', 'knight')).toMatchObject({ promotion: 'knight' })
+  })
+
+  it('undoes and lists history', () => {
+    const rules = createRules()
+    rules.move('e2', 'e4'); rules.move('e7', 'e5')
+    expect(rules.history()).toEqual(['e4', 'e5'])
+    expect(rules.undo()).toMatchObject({ from: 'e7', to: 'e5' })
+    expect(rules.turn()).toBe('dark')
+    expect(rules.pieces()).toHaveLength(32)
+    expect(rules.pieceAt('e7')).toEqual({ type: 'pawn', colour: 'dark' })
   })
 
   it('reports checkmate', () => {

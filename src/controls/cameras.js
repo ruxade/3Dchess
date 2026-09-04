@@ -52,8 +52,8 @@ export function createMainCamera(canvas, sizes) {
   }
 
   /** Behind the player whose turn it is: 'light' or 'dark'. */
-  function flyToSide(colour) {
-    flyTo(CAMERA.sides[colour])
+  function flyToSide(colour, seconds = CAMERA.flySeconds) {
+    flyTo(CAMERA.sides[colour], seconds)
   }
 
   const view = { scene: null, camera, postFx: true }   // scene is filled in by main.js

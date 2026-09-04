@@ -103,6 +103,20 @@ export function createPhysics() {
     entry.dynamic = true
   }
 
+  /** A knocked piece is put back into play: static again, following its mesh. */
+  function restore(mesh) {
+    const entry = entries.get(mesh)
+    if (!entry) return
+    const { body } = entry
+    body.type = CANNON.Body.STATIC
+    body.mass = 0
+    body.updateMassProperties()
+    body.velocity.setZero()
+    body.angularVelocity.setZero()
+    entry.dynamic = false
+    follow(mesh)
+  }
+
   /** Replace the collider (after a promotion changes the geometry). */
   function reshape(mesh) {
     remove(mesh)
@@ -137,5 +151,5 @@ export function createPhysics() {
     return () => impactListeners.delete(fn)
   }
 
-  return { world, entries, addPiece, follow, knock, reshape, remove, clear, step, onImpact }
+  return { world, entries, addPiece, follow, knock, restore, reshape, remove, clear, step, onImpact }
 }

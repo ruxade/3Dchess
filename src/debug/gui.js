@@ -2,13 +2,15 @@
 // Each control edits a live object, so changes show instantly. Key H hides it.
 
 import GUI from 'lil-gui'
-import { FOG } from '../config.js'
+import { FOG, OPPONENT } from '../config.js'
 
-export function createGui({ scene, camera, passes, pieces, dragControls, settings, physicsDebug }) {
+export function createGui({ scene, camera, passes, pieces, dragControls, settings, physicsDebug, hooks }) {
   const gui = new GUI({ title: 'Settings', width: 230 })
   gui.close()
 
   const game = gui.addFolder('Game')
+  game.add(settings, 'opponent', OPPONENT.levels).name('computer plays').onChange(() => hooks.onOpponentChange?.())
+  game.add(settings, 'humanColour', { white: 'light', black: 'dark' }).name('you play').onChange(() => hooks.onColourChange?.())
   game.add(settings, 'followTurn').name('camera follows turn')
   game.add(settings, 'physics').name('knock captured pieces')
   game.add(settings, 'sound').name('sound')

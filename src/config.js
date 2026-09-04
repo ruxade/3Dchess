@@ -69,12 +69,13 @@ export const CAMERA = {
   fov: 55,
   near: 0.1,
   far: 100,
-  position: { x: 9, y: 5, z: 9 },        // opening view, from the corner
-  sides: {                                // "behind the player" views, used when the camera follows the turn
-    light: { x: 0, y: 6.5, z: -11 },
-    dark: { x: 0, y: 6.5, z: 11 }
+  position: { x: 0, y: 22, z: -26 },     // where the intro flight starts: far and high
+  sides: {                                // behind the player, steep but not straight down
+    light: { x: 0, y: 10.5, z: -7.5 },
+    dark: { x: 0, y: 10.5, z: 7.5 }
   },
-  flySeconds: 1.4
+  flySeconds: 1.4,
+  introSeconds: 3.5
 }
 
 export const POST_FX = {
@@ -140,3 +141,19 @@ export const HOVER = {
   lift: 0.12,
   seconds: 0.25
 }
+
+export const EFFECTS = {
+  burstCount: 28,
+  burstLife: 0.7,       // seconds
+  burstColour: 0xd6c5ec,
+  impactThreshold: 2.5  // impact speed that earns a second puff
+}
+
+// The computer opponent. Levels are explained in docs/ARCHITECTURE.md section 9.
+export const OPPONENT = {
+  levels: ['off', 'beginner', 'casual', 'club'],
+  thinkBudgetMs: { beginner: 0, casual: 0, club: 1500 },
+  minReplyMs: 650   // even an instant answer waits this long, so it reads as a move, not a glitch
+}
+
+export const PROMOTION_CHOICES = ['queen', 'rook', 'bishop', 'knight']

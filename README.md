@@ -24,6 +24,8 @@ Node 22 and npm. Vite is the only build tool.
 * Click and drag a piece to move it. Legal squares light up, illegal drops bounce back, captures slide off to the side.
 * Only the side to move can be picked up. N starts a new game.
 * Captured pieces get knocked off the board (cannon-es physics). The camera glides behind the player to move.
+* Play the computer: Settings, Game, "computer plays" (beginner, casual, club). U undoes, the move list is top left.
+* A pawn on the last rank asks what it becomes.
 * G opens the gallery: each piece on a turntable, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
 * ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
@@ -34,12 +36,12 @@ Node 22 and npm. Vite is the only build tool.
 index.html            entry page
 src/main.js           wires everything together, start reading here
 src/config.js         every tunable number and asset path
-src/chess/            coordinates, rules (chess.js), controller that moves the meshes
+src/chess/            coordinates, rules (chess.js), controller, the computer opponent (engine + worker)
 src/core/             sizes, loading screen, renderer + post-processing
-src/scene/            materials, board, environment, pieces, highlights, gallery scene
+src/scene/            materials, board, environment, pieces, highlights, effects, gallery scene
 src/controls/         camera, drag and drop, view switching
 src/physics/          cannon-es world (pieces, board, floor, knock) + collider wireframes
-src/ui/               status line, colour panel, help panel, gallery bar
+src/ui/               status line, colour panel, help panel, gallery bar, move list, promotion chooser
 src/debug/            settings panel
 tests/                Vitest unit tests
 public/               static assets served at / (decimated .glb pieces, matcaps, icons)
@@ -55,6 +57,6 @@ Three.js, chess.js, GSAP, lil-gui, cannon-es, Vite, Vitest.
 ## Roadmap
 
 * Visual polish: real lighting and shadows, particles on capture, intro flythrough.
-* A computer opponent (rules based, three levels).
-* Chess rules: done (chess.js). Still to do: choose the promotion piece, undo, clocks.
+* Computer opponent: three rules-based levels are in. Next: an opening book, a stronger evaluation.
+* Chess rules: done (chess.js), with undo and a promotion chooser. Still to do: clocks, saving a game.
 * Multiplayer, one day.
