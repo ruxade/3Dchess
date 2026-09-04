@@ -59,7 +59,7 @@ export function createGallery(materials, canvas, sizes) {
     return show(GALLERY.order[(i + direction + GALLERY.order.length) % GALLERY.order.length])
   }
 
-  const view = { scene, camera, postFx: false }
+  const view = { scene, camera, postFx: false, update: () => controls.update() }
 
   return {
     view,

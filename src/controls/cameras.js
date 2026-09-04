@@ -98,7 +98,7 @@ export function createMainCamera(canvas, sizes) {
     flyTo(CAMERA.sides[colour], seconds)
   }
 
-  const view = { scene: null, camera, postFx: true }   // scene is filled in by main.js
+  const view = { scene: null, camera, postFx: true, update }   // scene is filled in by main.js
 
   return { camera, controls, view, update, setAspect, flyTo, flyToSide, shake }
 }

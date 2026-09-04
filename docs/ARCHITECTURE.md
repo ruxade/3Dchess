@@ -35,9 +35,11 @@ and the job is in the first comment of the file.
 | `src/scene/environment.js` | Sky sphere, fog. | Change the mood, the background |
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
 | `src/scene/gallery.js` | Gallery scene: one piece on a pedestal, own camera and orbit. | Change the gallery look |
+| `src/scene/victory.js` | Victory scene: the winner's pawn spinning, puffs. | Change the celebration |
+| `src/ui/victory.js` | Victory words and buttons. | Change the wording |
 | `src/controls/cameras.js` | Main camera, OrbitControls, flights, shake. | Change how the camera moves |
 | `src/controls/drag.js` | Carry a piece above the board, hand the drop to the controller. | Change how carrying feels |
-| `src/controls/views.js` | Game mode versus gallery mode, key H. | Add a mode |
+| `src/controls/views.js` | Game, gallery and victory modes, key H. | Add a mode |
 | `src/physics/world.js` | cannon-es world: static pieces, board, floor, knock(). | Tune how pieces fly |
 | `src/physics/debug.js` | Wireframe colliders (Settings, Debug, show colliders). | Nothing usually |
 | `src/core/sound.js` | The click sample, volume by impact. | Add sounds |
@@ -192,8 +194,20 @@ Three.js draws, cannon-es simulates. Every piece has a Body next to its Mesh.
   on and capture something: you will see exactly what the simulation sees.
 
 Knobs, all in `config.js` under `PHYSICS`: gravity, friction, restitution,
-the three knock values. Turn physics off (Settings, Game) and captures glide to
-a graveyard beside the board instead, the pre-physics behaviour.
+the three knock values. `knock()` takes a strength 0..1 (Settings, Game, "knock
+strength", default `PHYSICS.knockStrength`): speed and spin scale with it, lift
+only partly so the piece still clears its neighbours; the re-shove for a piece
+that dozes off on the board uses at least 0.7. Turn physics off (Settings,
+Game) and captures glide to a graveyard beside the board instead, the
+pre-physics behaviour.
+
+**Victory screen.** Checkmate schedules `celebrate()` after `VICTORY.delaySeconds`
+(so the mating move lands and the knock settles); a flag calls it sooner. Undo,
+new game and load cancel it. `ui/victory.js` writes the words and switches
+`views` to the `victory` mode, whose scene (`scene/victory.js`) is the gallery's
+recipe without orbit controls: the winner's pawn rises onto a pedestal, spins,
+and a second `createEffects()` instance puffs particles. Every view object now
+carries `update(dt)`, so the frame loop just calls `views.state.current.update(dt)`.
 
 Next steps if you want more:
 

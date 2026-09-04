@@ -48,6 +48,29 @@ describe('physics', () => {
     expect(Math.abs(victim.position.x) > 4 || Math.abs(victim.position.z) > 4).toBe(true)
   })
 
+  it('the gentlest knock still clears a neighbour and leaves the board', () => {
+    const physics = createPhysics()
+    const victim = piece(-2.5, 0.5)
+    const bystander = piece(-3.5, 0.5)
+    physics.addPiece(victim)
+    physics.addPiece(bystander)
+    physics.knock(victim, new THREE.Vector3(1, 0, 1).normalize(), 0.4)   // the slider's minimum
+    simulate(physics, 6)
+    expect(bystander.position.toArray()).toEqual([-3.5, 0, 0.5])
+    expect(Math.abs(victim.position.x) > 4 || Math.abs(victim.position.z) > 4).toBe(true)
+    expect(Math.hypot(victim.position.x, victim.position.z)).toBeLessThan(9)    // and lands closer than a full shove
+  })
+
+  it('a piece in the middle of the board gets enough shove to clear it', () => {
+    const physics = createPhysics()
+    const victim = piece(0.5, 0.5)   // e5, four squares from every edge
+    physics.addPiece(victim)
+    physics.knock(victim, new THREE.Vector3(0, 0, 1), 0.4)
+    simulate(physics, 6)
+    expect(Math.abs(victim.position.x) > 4 || Math.abs(victim.position.z) > 4).toBe(true)
+    expect(Math.hypot(victim.position.x, victim.position.z)).toBeLessThan(11)
+  })
+
   it('follow() moves a static body with its mesh', () => {
     const physics = createPhysics()
     const knight = piece(0, 0)

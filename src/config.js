@@ -77,8 +77,8 @@ export const CAMERA = {
   flySeconds: 1.4,
   introSeconds: 3.5,
   shake: {                                // a thud when a knocked piece lands hard
-    max: 0.012,                           // radians of jitter, at most
-    perUnitSpeed: 0.0015,                 // impact speed to radians
+    max: 0.006,                           // radians of jitter, at most
+    perUnitSpeed: 0.0008,                 // impact speed to radians
     decaySeconds: 0.12                    // how fast the jitter dies away
   }
 }
@@ -96,6 +96,14 @@ export const GALLERY = {
   autoRotateSpeed: 1.2,
   order: ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'],
   first: 'queen'
+}
+
+// The victory screen: the winner's pawn on a turntable, after a checkmate or a flag.
+export const VICTORY = {
+  delaySeconds: 1.8,     // let the mating move land and the knock settle first
+  spinSpeed: 1.4,        // radians per second
+  burstEvery: 0.6,       // seconds between particle puffs
+  camera: { height: 0.95, distance: 2.6 }   // multiples of the pawn's height
 }
 
 // Caption text for the gallery. Edit freely.
@@ -136,9 +144,12 @@ export const PHYSICS = {
   friction: 0.4,
   restitution: 0.25,
   topRadiusRatio: 0.55,  // a piece's collider is a tapered cylinder: narrower at the top
-  knockSpeed: 5,         // horizontal speed given to a captured piece
-  knockLift: 6.5,        // upward speed: high enough to arc over standing pieces
-  knockSpin: 6,          // tumble
+  knockReach: { min: 1.2, max: 4.5 },   // how far past the board edge a knocked piece lands, at strength 0 and 1
+  knockLift: 5.5,        // upward speed at strength 1: high enough to arc over standing pieces
+  knockSpin: 4,          // tumble at strength 1
+  knockDamping: { linear: 0.5, angular: 0.9 },    // air and rolling resistance: high, so a piece stops where it lands
+  knockSpeedFactor: 1.5,                           // extra launch speed to cover that damping in flight
+  knockStrength: 0.55,   // default for the Settings slider: 1 is the full shove, lower is a nudge
   travelWeight: 0.6      // how much the capturer's line of travel bends the shove (0 = straight to the nearest edge)
 }
 
@@ -157,6 +168,7 @@ export const HOVER = {
 export const EFFECTS = {
   burstCount: 28,
   burstLife: 0.7,       // seconds
+  burstSize: 0.14,      // world units; the dot is a soft radial glow, so it reads smaller
   burstColour: 0xd6c5ec,
   impactThreshold: 2.5  // impact speed that earns a second puff
 }

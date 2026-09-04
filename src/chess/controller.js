@@ -11,7 +11,7 @@
 
 import * as THREE from 'three'
 import { gsap } from 'gsap'
-import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, GAME_STORAGE_KEY } from '../config.js'
+import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, GAME_STORAGE_KEY } from '../config.js'
 import { nameToSquare, squareName, squareToWorld } from './coords.js'
 import { createClock } from './clock.js'
 import { createPieceSet } from '../scene/pieces.js'
@@ -28,7 +28,7 @@ export function applySavedSettings(settings) {
 
 export function createGameController({
   rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
-  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline
+  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline, celebrate
 }) {
   const bySquare = new Map()                 // 'e2' -> mesh
   const captured = { light: 0, dark: 0 }     // graveyard slots used (physics off)
@@ -36,11 +36,19 @@ export function createGameController({
   let thinking = 0                           // token: a reply older than this is ignored
   let lastPuff = 0
   let clock = null                           // the chess clock, or null when off
+  let celebration = null                     // the delayed call that opens the victory screen
 
   const worldOf = (square) => { const { col, row } = nameToSquare(square); return squareToWorld(col, row) }
   const computerColour = () => (settings.humanColour === 'light' ? 'dark' : 'light')
   const computerOn = () => settings.opponent !== 'off'
   const gameOver = () => rules.status().gameOver || !!clock?.flagged()
+  const other = (colour) => (colour === 'light' ? 'dark' : 'light')
+
+  /** The victory screen, after the last move has landed. Undo, reset and load call it off. */
+  function scheduleCelebration(winner, reason, delay = VICTORY.delaySeconds) {
+    celebration?.kill()
+    celebration = gsap.delayedCall(delay, () => { celebration = null; celebrate?.({ winner, reason }) })
+  }
 
   function index() {
     bySquare.clear()
@@ -72,7 +80,10 @@ export function createGameController({
     }
     refresh()
     persist()
-    if (state.gameOver) return
+    if (state.gameOver) {
+      if (state.checkmate) scheduleCelebration(other(state.turn), 'checkmate')
+      return
+    }
     if (computerOn()) {
       if (state.turn === computerColour()) computerMove()
     } else if (settings.followTurn) {
@@ -208,7 +219,7 @@ export function createGameController({
         const a = worldOf(fromSquare), b = worldOf(toSquare)
         travel.set(b.x - a.x, 0, b.z - a.z).normalize()
       }
-      physics.knock(piece, travel)
+      physics.knock(piece, travel, settings.knockStrength)
       effects.burst(new THREE.Vector3(piece.position.x, 0.6, piece.position.z))
       return
     }
@@ -286,6 +297,7 @@ export function createGameController({
   function undo() {
     if (promotionUi.isOpen() || clock?.flagged()) return    // out of time is final, press N
     thinking++                                              // drop any reply in flight
+    celebration?.kill()
     if (!rules.undo()) return
     // Against the computer, take its move back too so it is your turn again.
     if (computerOn() && rules.turn() !== settings.humanColour) rules.undo()
@@ -302,6 +314,7 @@ export function createGameController({
   /** Start over: fresh rules, fresh pieces, fresh bodies. */
   function reset() {
     thinking++
+    celebration?.kill()
     rules.reset()
     highlights.clear()
     select(null)
@@ -323,6 +336,7 @@ export function createGameController({
   /** Jump to any position (FEN). Handy from the console: chess.game.load('...'). */
   function load(fen) {
     thinking++
+    celebration?.kill()
     rules.load(fen)
     highlights.clear()
     clock?.reset()
@@ -349,10 +363,11 @@ export function createGameController({
   }
 
   /** A side ran out of time: the game is over, nobody moves, the computer stops thinking. */
-  function onFlag() {
+  function onFlag(colour) {
     thinking++
     refresh()
     persist()
+    scheduleCelebration(other(colour), 'time', 0.8)
   }
 
   /** Settings panel changed the clock. A game already under way puts the side to move on the clock at once. */

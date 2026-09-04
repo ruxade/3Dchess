@@ -14,6 +14,7 @@ export function createGui({ scene, camera, passes, pieces, dragControls, setting
   game.add(settings, 'clock', Object.keys(CLOCK.presets)).name('clock').onChange(() => hooks.onClockChange?.())
   game.add(settings, 'followTurn').name('camera follows turn')
   game.add(settings, 'physics').name('knock captured pieces')
+  game.add(settings, 'knockStrength', 0.4, 1, 0.05).name('knock strength')
   game.add(settings, 'sound').name('sound')
   game.add(settings, 'dragging').name('allow dragging').onChange((v) => { dragControls.enabled = v })
   game.add(pieces, 'visible').name('show pieces')

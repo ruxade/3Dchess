@@ -15,6 +15,7 @@ import { loadPieceGeometries, createPieceSet } from './scene/pieces.js'
 import { createHighlights } from './scene/highlights.js'
 import { createEffects } from './scene/effects.js'
 import { createGallery } from './scene/gallery.js'
+import { createVictory } from './scene/victory.js'
 import { createMainCamera } from './controls/cameras.js'
 import { createDragControls } from './controls/drag.js'
 import { createViews } from './controls/views.js'
@@ -31,10 +32,12 @@ import { createGalleryUi } from './ui/gallery.js'
 import { createMovesUi } from './ui/moves.js'
 import { createPromotionUi } from './ui/promotion.js'
 import { createClocksUi } from './ui/clocks.js'
+import { createVictoryUi } from './ui/victory.js'
+import { PHYSICS } from './config.js'
 
 // Things the user can toggle at runtime (Settings panel). Modules read these live.
 const settings = {
-  dragging: true, physics: true, sound: true, followTurn: true, cameraShake: true, showColliders: false,
+  dragging: true, physics: true, knockStrength: PHYSICS.knockStrength, sound: true, followTurn: true, cameraShake: true, showColliders: false,
   opponent: 'off', humanColour: 'light', clock: 'off'
 }
 applySavedSettings(settings)   // opponent, colour and clock come back with the saved game
@@ -59,6 +62,7 @@ scene.add(pieces)
 const highlights = createHighlights(scene)                  // legal-move markers
 const effects = createEffects(scene)                        // particle puffs
 const gallery = createGallery(materials, canvas, sizes)     // key G: one piece on a turntable
+const victory = createVictory(materials, sizes)             // the winner's pawn, after checkmate or a flag
 
 // ---- 2. Camera, rendering, controls ---------------------------------------
 const mainCamera = createMainCamera(canvas, sizes)
@@ -72,8 +76,9 @@ const physicsDebug = createPhysicsDebug(physics, scene)     // wireframes, off b
 const sound = createSound(settings)
 
 const gui = createGui({ scene, camera: mainCamera.camera, passes, pieces, dragControls, settings, physicsDebug, hooks })
-const views = createViews({ game: mainCamera, gallery, dragControls, gui, settings, onChange: (mode) => { if (mode === 'gallery') galleryUi.render() } })
+const views = createViews({ game: mainCamera, gallery, victory, dragControls, gui, settings, onChange: (mode) => { if (mode === 'gallery') galleryUi.render() } })
 const galleryUi = createGalleryUi({ gallery, views })
+const victoryUi = createVictoryUi({ victory, views, onNew: () => hooks.reset?.() })
 const status = createStatus()                               // "White to move" line
 createPalette(materials)                                    // colour panel, key P
 createHelp()                                                // help panel, key ?
@@ -85,6 +90,7 @@ const opponent = createOpponent()                           // the engine, in a 
 onResize(({ width, height }) => {
   mainCamera.setAspect(width / height)
   gallery.setAspect(width / height)
+  victory.setAspect(width / height)
 })
 
 // ---- 3. Load the pieces, then start the game (async) ----------------------
@@ -94,9 +100,11 @@ loadPieceGeometries(loading.manager)
   .then((geometries) => {
     createPieceSet(geometries, materials, pieces)
     gallery.populate(geometries)
+    victory.populate(geometries)
     const game = createGameController({
       rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
-      camera: mainCamera, settings, opponent, movesUi, promotionUi, clocksUi, outline: passes.outline
+      camera: mainCamera, settings, opponent, movesUi, promotionUi, clocksUi, outline: passes.outline,
+      celebrate: victoryUi.celebrate
     })
     dragControls.setHandlers(game)                          // drag asks the game what is allowed
     hooks.undo = game.undo
@@ -115,8 +123,7 @@ const clock = new THREE.Clock()
 
 function tick() {
   const dt = clock.getDelta()      // seconds since last frame
-  if (views.state.mode === 'gallery') gallery.update()
-  else mainCamera.update(dt)       // orbit damping + keep inside the world + shake
+  views.state.current.update(dt)   // game: orbit damping + shake; gallery: turntable; victory: spin + puffs
   physics.step(dt)                 // simulate, then copy bodies onto flying pieces
   effects.update(dt)               // particles
   hooks.tick?.(dt)                 // the chess clock

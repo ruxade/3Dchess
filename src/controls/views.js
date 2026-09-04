@@ -1,14 +1,16 @@
-// Two modes: the game (board, drag, post-processing, settings) and the gallery
-// (one piece on a turntable). Exactly one set of controls is live at a time.
-// body[data-mode] lets the CSS show the right panels.
+// Three modes: the game (board, drag, post-processing, settings), the gallery
+// (one piece on a turntable) and the victory screen (the winner's pawn).
+// Exactly one set of controls is live at a time. body[data-mode] lets the CSS
+// show the right panels. Every view carries its own update(dt) for the frame loop.
 
-export function createViews({ game, gallery, dragControls, gui, settings, onChange }) {
+export function createViews({ game, gallery, victory, dragControls, gui, settings, onChange }) {
+  const views = { game: game.view, gallery: gallery.view, victory: victory.view }
   const state = { mode: 'game', current: game.view }
 
   function select(mode) {
-    if (mode !== 'game' && mode !== 'gallery') return
+    if (!views[mode]) return
     state.mode = mode
-    state.current = mode === 'game' ? game.view : gallery.view
+    state.current = views[mode]
     game.controls.enabled = mode === 'game'
     gallery.setActive(mode === 'gallery')
     dragControls.enabled = mode === 'game' && settings.dragging

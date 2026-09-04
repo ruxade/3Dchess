@@ -31,7 +31,7 @@ export function createPhysics() {
   world.addBody(board)
   world.addBody(floor)
 
-  const entries = new Map()          // mesh -> { body, halfHeight, dynamic }
+  const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength }
   const impactListeners = new Set()
   const up = new THREE.Vector3(0, 1, 0)
   const scratch = new THREE.Vector3()
@@ -48,7 +48,7 @@ export function createPhysics() {
   function addPiece(mesh) {
     const { shape, halfHeight } = shapeFor(mesh)
     const body = new CANNON.Body({ type: CANNON.Body.STATIC, shape })
-    const entry = { body, halfHeight, dynamic: false }
+    const entry = { body, halfHeight, dynamic: false, strength: 1 }
     entries.set(mesh, entry)
     follow(mesh)
     world.addBody(body)
@@ -64,9 +64,28 @@ export function createPhysics() {
       if (onBoard) {
         body.wakeUp()
         const away = scratch.set(body.position.x, 0, body.position.z).normalize()
-        body.velocity.set(away.x * PHYSICS.knockSpeed, PHYSICS.knockLift * 0.5, away.z * PHYSICS.knockSpeed)
+        shove(body, away, Math.max(0.7, entry.strength))   // a gentle knock still has to get it off the board
       }
     })
+  }
+
+  /**
+   * Set a body's velocity so it lands `knockReach` past the nearest board edge:
+   * the lift fixes the flight time, the distance to cover fixes the speed. So a
+   * piece in the middle of the board gets a harder shove than one at the edge,
+   * and every strength clears the board.
+   */
+  function shove(body, direction, strength) {
+    const lift = PHYSICS.knockLift * (0.6 + 0.4 * strength)
+    const flightTime = (2 * lift) / -PHYSICS.gravity
+    const reach = PHYSICS.knockReach.min + (PHYSICS.knockReach.max - PHYSICS.knockReach.min) * strength
+    const { x, z } = body.position
+    const outwardX = Math.abs(direction.x) >= Math.abs(direction.z)
+    const toEdge = half - (outwardX ? Math.abs(x) : Math.abs(z))
+    const along = Math.max(0.5, outwardX ? Math.abs(direction.x) : Math.abs(direction.z))   // how much of the shove points outward
+    const speed = ((Math.max(0, toEdge) + reach) / along / flightTime) * PHYSICS.knockSpeedFactor
+    body.velocity.set(direction.x * speed, lift, direction.z * speed)
+    return lift
   }
 
   /** Move a STATIC body to wherever its mesh now stands (after a move animation). */
@@ -81,24 +100,27 @@ export function createPhysics() {
    * Turn a piece loose: dynamic, shoved off the board. The shove points at the
    * nearest board edge (shortest way out, fewest pieces in the way), bent a
    * little towards `travel`, the capturer's line of approach, so it reads as
-   * "knocked" rather than "ejected".
+   * "knocked" rather than "ejected". `strength` 0..1 (the Settings slider)
+   * sets how far past the edge it lands, how high it arcs and how fast it spins.
    */
-  function knock(mesh, travel) {
+  function knock(mesh, travel, strength = 1) {
     const entry = entries.get(mesh)
     if (!entry) return
     follow(mesh)
     const { body } = entry
+    entry.strength = strength
+    const spin = PHYSICS.knockSpin * strength
     const { x, z } = mesh.position
     const outward = Math.abs(x) >= Math.abs(z) ? new THREE.Vector3(Math.sign(x) || 1, 0, 0) : new THREE.Vector3(0, 0, Math.sign(z) || 1)
     const direction = outward.addScaledVector(travel, PHYSICS.travelWeight).normalize()
     body.type = CANNON.Body.DYNAMIC
     body.mass = 1
     body.updateMassProperties()
-    body.linearDamping = 0.15
-    body.angularDamping = 0.3
-    body.velocity.set(direction.x * PHYSICS.knockSpeed, PHYSICS.knockLift, direction.z * PHYSICS.knockSpeed)
+    body.linearDamping = PHYSICS.knockDamping.linear
+    body.angularDamping = PHYSICS.knockDamping.angular
+    shove(body, direction, strength)
     const axis = scratch.copy(up).cross(direction).normalize()   // tumble end over end
-    body.angularVelocity.set(axis.x * PHYSICS.knockSpin, (Math.random() - 0.5) * 2, axis.z * PHYSICS.knockSpin)
+    body.angularVelocity.set(axis.x * spin, (Math.random() - 0.5) * 2 * strength, axis.z * spin)
     body.wakeUp()
     entry.dynamic = true
   }
