@@ -52,18 +52,21 @@ export function createMainCamera(canvas, sizes) {
   /**
    * Glide the camera to a new spot, looking at the board centre. OrbitControls
    * is paused for the flight so its damping does not fight the tween.
+   * `sense` (1 or -1) picks which way round to go when the two spots are
+   * exactly opposite: moves circle one way, undo rewinds the other.
    */
-  function flyTo(position, seconds = CAMERA.flySeconds) {
+  function flyTo(position, seconds = CAMERA.flySeconds, sense = 1) {
     controls.enabled = false
     gsap.killTweensOf([camera.position, controls.target, flight])
 
     const from = new THREE.Spherical().setFromVector3(offset.copy(camera.position).sub(controls.target))
     const to = new THREE.Spherical().setFromVector3(offset.set(position.x, position.y, position.z))   // relative to the board centre, where the target is heading
-    // Go round the short way. Exactly opposite sides (the usual case) always
-    // swing the same way round, so the camera circles the table like a spectator.
+    // Go round the short way. Exactly opposite sides (the usual case) swing
+    // the way `sense` says, so the camera circles the table like a spectator
+    // after a move and comes back the way it went after an undo.
     let turn = to.theta - from.theta
     turn = Math.atan2(Math.sin(turn), Math.cos(turn))
-    if (Math.abs(Math.abs(turn) - Math.PI) < 1e-3) turn = Math.PI
+    if (Math.abs(Math.abs(turn) - Math.PI) < 1e-3) turn = Math.PI * sense
 
     Object.assign(flight, { radius: from.radius, phi: from.phi, theta: from.theta, active: true })
     gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: seconds, ease: 'power2.inOut' })
@@ -76,9 +79,9 @@ export function createMainCamera(canvas, sizes) {
     })
   }
 
-  /** Behind the player whose turn it is: 'light' or 'dark'. */
-  function flyToSide(colour, seconds = CAMERA.flySeconds) {
-    flyTo(CAMERA.sides[colour], seconds)
+  /** Behind the player whose turn it is: 'light' or 'dark'. `sense` -1 rewinds (undo). */
+  function flyToSide(colour, seconds = CAMERA.flySeconds, sense = 1) {
+    flyTo(CAMERA.sides[colour], seconds, sense)
   }
 
   const view = { scene: null, camera, postFx: true, update }   // scene is filled in by main.js

@@ -307,7 +307,7 @@ export function createGameController({
     clock?.switchTo(rules.turn())                           // no time is refunded
     persist()
     const state = rules.status()
-    if (!computerOn() && settings.followTurn && !state.gameOver) camera.flyToSide(state.turn)
+    if (!computerOn() && settings.followTurn && !state.gameOver) camera.flyToSide(state.turn, CAMERA.flySeconds, -1)   // rewind: back the way it came
     if (computerOn() && state.turn === computerColour() && !state.gameOver) computerMove()
   }
 
