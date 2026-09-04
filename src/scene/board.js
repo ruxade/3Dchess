@@ -23,7 +23,7 @@ export function createBoard(materials) {
   const squareGeometry = new THREE.BoxGeometry(BOARD.squareSize, BOARD.squareHeight, BOARD.squareSize)
   for (let row = 0; row < BOARD.size; row++) {
     for (let col = 0; col < BOARD.size; col++) {
-      const material = isDarkSquare(col, row) ? materials.dark : materials.light
+      const material = isDarkSquare(col, row) ? materials.darkSquares : materials.lightSquares
       const square = new THREE.Mesh(squareGeometry, material)
       const { x, z } = squareToWorld(col, row)
       square.position.set(x, -BOARD.squareHeight / 2, z)   // top face lands on y = 0

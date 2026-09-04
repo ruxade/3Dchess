@@ -4,7 +4,7 @@ import * as THREE from 'three'
 import { FOG, WORLD_RADIUS } from '../config.js'
 
 export function createEnvironment(scene, materials) {
-  scene.add(createSkySphere(WORLD_RADIUS, materials.background))
+  scene.add(createSkySphere(WORLD_RADIUS, materials.sky))
 
   // FogExp2 fades geometry towards one colour as it gets further from the
   // camera. Density is the only control: bigger means thicker fog.

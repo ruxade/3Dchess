@@ -14,10 +14,13 @@ and the job is in the first comment of the file.
 | `src/chess/controller.js` | Applies a legal move to the meshes: capture, castle, promote, bounce back. | Change what a move looks like |
 | `src/scene/highlights.js` | Legal-move markers on the board. | Change the markers |
 | `src/ui/status.js` | The "White to move" line. | Change messages |
+| `src/ui/palette.js` | Colour panel: slots, swatches, presets, localStorage. | Add a preset, a slot |
+| `src/ui/help.js` | The controls panel toggle. | Nothing usually |
+| `tools/decimate.py` | Blender script: FBX sources to light .glb files. | Re-export after editing a model |
 | `src/core/sizes.js` | Viewport size, resize event. | Nothing usually |
 | `src/core/loading.js` | Progress bar, black fade overlay. | Change the intro |
 | `src/core/renderer.js` | WebGLRenderer, post-processing passes. | Add a visual effect (bloom, blur, colour grading) |
-| `src/scene/materials.js` | The five matcap materials. | Change how surfaces look |
+| `src/scene/materials.js` | One matcap material per recolourable slot, setMatcap(). | Change how surfaces look |
 | `src/scene/board.js` | Plate, 64 squares, grid lines. | Change the board |
 | `src/scene/environment.js` | Sky sphere, fog. | Change the mood, the background |
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
@@ -28,8 +31,9 @@ and the job is in the first comment of the file.
 | `src/physics/world.js` | cannon-es world (ground only so far). | Add physics |
 | `src/debug/gui.js` | The Settings panel (lil-gui). | Expose a new slider |
 
-`public/` is served at the site root, so `/models/set/fbx/king.fbx` on disk is
-`public/models/set/fbx/king.fbx`. `design/` holds the Photoshop source of the icon.
+`public/` is served at the site root, so `/models/set/glb/king.glb` on disk is
+`public/models/set/glb/king.glb`. `design/` holds the sources that are not
+shipped: the original FBX models and the Photoshop file of the icon.
 
 ## 2. What happens when the page opens
 
@@ -40,8 +44,8 @@ and the job is in the first comment of the file.
 2. **Camera, rendering, controls.** The camera and its orbit controls, the
    renderer with its post-processing chain, drag controls, the empty physics
    world, the settings panel, the view switcher.
-3. **Load the pieces.** Async. The six FBX files download (15 MB in total), get
-   flattened into six geometries, then 32 meshes are placed. Meanwhile the
+3. **Load the pieces.** Async. The six .glb files download (1.5 MB in total),
+   get flattened into six geometries, then 32 meshes are placed. Meanwhile the
    loading bar fills from `LoadingManager` callbacks.
 4. **Frame loop.** `tick()` runs about 60 times per second.
 
@@ -102,14 +106,16 @@ so they do not appear here.
 
 ## 5. Why a piece is a single Mesh
 
-The FBX files come out of the loader as `Group (rotated -90 degrees on x) > Mesh`.
-The rotation is how the exporter turned a Z-up model into Y-up.
-
-`loadPieceGeometries()` bakes that rotation, the child offset and the 0.02
-scale straight into the vertex positions, once per model type. After that a
-piece is one `THREE.Mesh` with a clean transform: `position` is where it stands,
+`tools/decimate.py` already exports each piece as one mesh, y up, base at
+y = 0, centred, at world scale. `loadPieceGeometries()` still bakes any node
+transform into the vertex positions, once per model type, so a piece is one
+`THREE.Mesh` with a clean transform: `position` is where it stands,
 `rotation.y` is which way it faces. Dragging, animating and physics all get
 simpler because there is no hidden parent transform to reason about.
+
+(The original FBX files came out of the loader as `Group (rotated -90 degrees
+on x) > Mesh`, the exporter's way of turning a Z-up model into Y-up. That is
+why the first version of this code had to bake a rotation and a 0.02 scale.)
 
 All 8 pawns share one geometry on the GPU. `new Mesh(geometry, material)` does
 not copy vertex data.
@@ -169,7 +175,7 @@ Ranked by payoff for effort. Each one lives in one file.
    pass. On `dragend`, animate the snap instead of teleporting.
 2. **Real lighting** (`scene/materials.js`). Swap `MeshMatcapMaterial` for
    `MeshStandardMaterial` plus an environment map from `RoomEnvironment`, turn
-   on shadows. The pieces are high-poly, they will look sculptural.
+   on shadows. The palette panel would then pick colours instead of matcaps.
 3. **Camera choreography** (`controls/cameras.js`). Intro flythrough with GSAP
    on `camera.position` while the overlay fades; a "look at the piece I am
    holding" nudge during drag.
@@ -186,25 +192,31 @@ Ranked by payoff for effort. Each one lives in one file.
 `rules.js` (the chess.js translation, including en passant, castling,
 promotion and checkmate). Everything that touches WebGL is checked by eye.
 
-## 8. Performance note
+## 8. Models and performance
 
-The models are far heavier than they need to be:
+The FBX sources in `design/models/fbx` are print-resolution. `tools/decimate.py`
+runs Blender headless and writes the game-resolution .glb files:
 
-| Piece | Vertices | Count on board |
-| --- | --- | --- |
-| king | 534,966 | 2 |
-| queen | 457,686 | 2 |
-| bishop | 162,900 | 4 |
-| pawn | 87,744 | 16 |
-| knight | 37,032 | 4 |
-| rook | 12,888 | 4 |
+| Piece | Triangles before | Triangles after | On board |
+| --- | --- | --- | --- |
+| king | 178,322 | 14,000 | 2 |
+| queen | 152,558 | 14,000 | 2 |
+| bishop | 54,300 | 9,000 | 4 |
+| pawn | 29,248 | 6,000 | 16 |
+| knight | 12,344 | 9,000 | 4 |
+| rook | 4,296 | 4,296 | 4 |
 
-About 4.2 million vertices per frame, drawn twice when bloom is on. It runs,
-but it caps what else you can afford. A chess piece reads perfectly at 5,000
-to 10,000 vertices. Decimate in Blender (Decimate modifier, ratio 0.05), export
-as glTF binary with Draco compression, and the 15 MB download becomes about
-1 MB. Change the paths in `config.js` and swap `FBXLoader` for `GLTFLoader`
-with `DRACOLoader` in `pieces.js`. Nothing else needs to know.
+Per frame: about 1.4 million triangles before, 230 thousand after. Download:
+15 MB before, 1.5 MB after. To change the budgets edit `TRIANGLE_BUDGET` in the
+script and run:
+
+```bash
+/Applications/Blender.app/Contents/MacOS/Blender -b --python tools/decimate.py -- design/models/fbx public/models/set/glb
+```
+
+If you ever remodel a piece, export FBX into `design/models/fbx` and rerun.
+Draco compression (`DRACOLoader`) could take the 1.5 MB to about 400 KB; not
+worth the extra moving parts yet.
 
 ## 9. Glossary
 

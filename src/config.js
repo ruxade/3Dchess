@@ -14,17 +14,15 @@ export const PLATE = {
   height: 1
 }
 
-// The FBX files are exported in centimetres, so 0.02 brings a piece to
-// roughly 1.2 to 1.8 world units tall (a bit taller than a square is wide).
-export const PIECE_SCALE = 0.02
-
+// Decimated glTF binaries made by tools/decimate.py from the FBX sources in
+// design/models/fbx. Already at world scale: a pawn is 1.19 units tall.
 export const PIECE_MODELS = {
-  pawn: '/models/set/fbx/pawn.fbx',
-  rook: '/models/set/fbx/rook.fbx',
-  knight: '/models/set/fbx/knight.fbx',
-  bishop: '/models/set/fbx/bishop.fbx',
-  queen: '/models/set/fbx/queen.fbx',
-  king: '/models/set/fbx/king.fbx'
+  pawn: '/models/set/glb/pawn.glb',
+  rook: '/models/set/glb/rook.glb',
+  knight: '/models/set/glb/knight.glb',
+  bishop: '/models/set/glb/bishop.glb',
+  queen: '/models/set/glb/queen.glb',
+  king: '/models/set/glb/king.glb'
 }
 
 // Standard chess back rank, read from file a to file h.
@@ -32,13 +30,33 @@ export const BACK_RANK = ['rook', 'knight', 'bishop', 'queen', 'king', 'bishop',
 
 // Matcaps are "material capture" images: a lit sphere baked into a picture.
 // MeshMatcapMaterial samples it by surface normal, so no lights are needed.
-export const MATCAPS = {
-  light: '/textures/matcaps/17.png',       // white pieces
-  dark: '/textures/matcaps/32.png',        // black pieces
-  plate: '/textures/matcaps/6.png',        // round plate under the board
-  background: '/textures/matcaps/34.png',  // inside of the sky sphere
-  display: '/textures/matcaps/26.png'      // pieces in the showcase views
+// The files live in public/textures/matcaps/<id>.png.
+export const MATCAP_IDS = [
+  1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+  23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 45, 46
+]
+export const matcapUrl = (id) => `/textures/matcaps/${id}.png`
+
+// Every surface that can be recoloured, with the label the palette panel shows.
+export const MATERIAL_SLOTS = {
+  lightPieces: 'White pieces',
+  darkPieces: 'Black pieces',
+  lightSquares: 'Light squares',
+  darkSquares: 'Dark squares',
+  plate: 'Plate',
+  sky: 'Sky',
+  display: 'Showcase'
 }
+
+// Curated combinations. The first one is the default look.
+export const PALETTES = {
+  'Lilac dusk': { lightPieces: 17, darkPieces: 32, lightSquares: 17, darkSquares: 32, plate: 6, sky: 34, display: 26 },
+  'Marble hall': { lightPieces: 14, darkPieces: 11, lightSquares: 12, darkSquares: 22, plate: 13, sky: 35, display: 3 },
+  'Ember': { lightPieces: 4, darkPieces: 24, lightSquares: 16, darkSquares: 31, plate: 19, sky: 36, display: 26 },
+  'Lagoon': { lightPieces: 30, darkPieces: 23, lightSquares: 2, darkSquares: 21, plate: 27, sky: 33, display: 25 }
+}
+export const DEFAULT_PALETTE = 'Lilac dusk'
+export const PALETTE_STORAGE_KEY = '3dchess.palette'
 
 export const FOG = {
   color: 0xcac0e5,

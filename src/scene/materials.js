@@ -1,23 +1,37 @@
-// All materials in one place so the whole look can be changed from here.
-// Every material is a MeshMatcapMaterial: unlit, shading comes from the image.
+// Every recolourable surface, one MeshMatcapMaterial per slot.
+// The palette panel calls setMatcap(slot, id) to swap the picture on a slot;
+// the material object stays the same, so meshes update without being touched.
 
 import * as THREE from 'three'
-import { MATCAPS } from '../config.js'
+import { MATERIAL_SLOTS, PALETTES, DEFAULT_PALETTE, matcapUrl } from '../config.js'
 
-export function createMaterials(textureLoader) {
-  const matcap = (path) => new THREE.MeshMatcapMaterial({ matcap: textureLoader.load(path) })
+export function createMaterials(textureLoader, initialPalette) {
+  const palette = { ...PALETTES[DEFAULT_PALETTE], ...(initialPalette || {}) }
+  const materials = {}
+  const cache = new Map()
+  const lateLoader = new THREE.TextureLoader()   // swaps after start-up skip the loading screen
 
-  const light = matcap(MATCAPS.light)
-  const dark = matcap(MATCAPS.dark)
-  const plate = matcap(MATCAPS.plate)
-  const background = matcap(MATCAPS.background)
-  const display = matcap(MATCAPS.display)
+  const texture = (id, loader) => {
+    if (!cache.has(id)) cache.set(id, loader.load(matcapUrl(id)))
+    return cache.get(id)
+  }
 
-  // NearestFilter stops the GPU blending between matcap pixels when zoomed in,
-  // which gives these two a slightly crunchier, more graphic shading.
-  // Delete these two lines to see the smooth version.
-  dark.matcap.magFilter = THREE.NearestFilter
-  plate.matcap.magFilter = THREE.NearestFilter
+  for (const slot of Object.keys(MATERIAL_SLOTS)) {
+    materials[slot] = new THREE.MeshMatcapMaterial({ matcap: texture(palette[slot], textureLoader) })
+  }
 
-  return { light, dark, plate, background, display }
+  /** Change one surface. Returns the new palette. */
+  function setMatcap(slot, id) {
+    palette[slot] = id
+    materials[slot].matcap = texture(id, lateLoader)
+    return { ...palette }
+  }
+
+  /** Change every surface at once (a preset). */
+  function applyPalette(next) {
+    for (const [slot, id] of Object.entries(next)) if (materials[slot]) setMatcap(slot, id)
+    return { ...palette }
+  }
+
+  return Object.assign(materials, { setMatcap, applyPalette, getPalette: () => ({ ...palette }) })
 }

@@ -20,6 +20,8 @@ import { createHighlights } from './scene/highlights.js'
 import { createRules } from './chess/rules.js'
 import { createGameController } from './chess/controller.js'
 import { createStatus } from './ui/status.js'
+import { createPalette, loadSavedPalette } from './ui/palette.js'
+import { createHelp } from './ui/help.js'
 import { createGui } from './debug/gui.js'
 
 // ---- 1. Scene -------------------------------------------------------------
@@ -28,7 +30,7 @@ const scene = new THREE.Scene()
 
 const loading = createLoading(scene)                        // progress bar + fade overlay
 const textureLoader = new THREE.TextureLoader(loading.manager)
-const materials = createMaterials(textureLoader)
+const materials = createMaterials(textureLoader, loadSavedPalette())   // remembers your colours
 
 createEnvironment(scene, materials)                         // sky sphere + fog
 scene.add(createBoard(materials))                           // plate + 64 squares + grid
@@ -67,6 +69,8 @@ onResize(({ width, height }) => {
 const rules = createRules()                                 // chess.js behind a small API
 const highlights = createHighlights(scene)                  // legal-move markers
 const status = createStatus()                               // "White to move" line
+createPalette(materials)                                    // colour panel, key P
+createHelp()                                                // help panel, key ?
 
 loadPieceGeometries(loading.manager)
   .then((geometries) => {

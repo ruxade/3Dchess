@@ -10,7 +10,7 @@ import { createSkySphere } from './environment.js'
 export function createShowcase(materials, sizes) {
   const scene = new THREE.Scene()
   scene.name = 'showcase'
-  scene.add(createSkySphere(SHOWCASE.sphereRadius, materials.background))
+  scene.add(createSkySphere(SHOWCASE.sphereRadius, materials.sky))
   scene.add(new THREE.AxesHelper(3))   // red x, green y, blue z: handy while learning
 
   // One camera per piece, all parked at the centre, each turned to face its piece.

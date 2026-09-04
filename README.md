@@ -24,7 +24,8 @@ Node 22 and npm. Vite is the only build tool.
 * Click and drag a piece to move it. Legal squares light up, illegal drops bounce back, captures slide off to the side.
 * Only the side to move can be picked up. N starts a new game.
 * Keys 1 to 5 switch camera views (1 is the board, 2 to 5 are single pieces).
-* H hides the settings panel. Double click for fullscreen.
+* P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
+* ? shows the controls, H hides the settings panel, double click for fullscreen.
 
 ## Code layout
 
@@ -37,11 +38,12 @@ src/core/             sizes, loading screen, renderer + post-processing
 src/scene/            materials, board, environment, pieces, showcase scene
 src/controls/         camera, drag and drop, view switching
 src/physics/          cannon-es world (extension point, empty so far)
-src/ui/               status line
+src/ui/               status line, colour panel, help panel
 src/debug/            settings panel
 tests/                Vitest unit tests
-public/               static assets served at /
-design/               source files (icon PSD)
+public/               static assets served at / (decimated .glb pieces, matcaps, icons)
+design/               sources that are not shipped (original FBX models, icon PSD)
+tools/decimate.py     Blender script that turns the FBX sources into the .glb files
 docs/ARCHITECTURE.md  the walkthrough: how a frame works, how to add physics, ideas
 ```
 
@@ -54,5 +56,4 @@ Three.js, chess.js, GSAP, lil-gui, cannon-es, Vite, Vitest.
 * Physics: pieces with mass, captures that knock pieces off the board.
 * Visual polish: hover feedback, real lighting and shadows, camera choreography.
 * Chess rules: done (chess.js). Still to do: choose the promotion piece, undo, clocks.
-* Lighter models: decimated glTF with Draco instead of 15 MB of FBX.
 * Multiplayer, one day.
