@@ -19,9 +19,24 @@ export function createMainCamera(canvas, sizes) {
   const centre = new THREE.Vector3(0, 0, 0)
   let jitter = 0   // radians of camera shake still to play out
 
+  // A flight is tweened in orbit coordinates around the target (radius, phi
+  // down from the zenith, theta around), so the camera swings round the board.
+  // A straight line between the two sides would pass over the top, where
+  // lookAt has no idea which way is up and the picture flips.
+  const flight = { radius: 0, phi: 0, theta: 0, active: false }
+  const spherical = new THREE.Spherical()
+  const offset = new THREE.Vector3()
+
+  function placeFromFlight() {
+    spherical.set(flight.radius, flight.phi, flight.theta)
+    camera.position.setFromSpherical(spherical).add(controls.target)
+    camera.lookAt(controls.target)
+  }
+
   /** Call once per frame with the frame time. Damping needs the update to keep moving. */
   function update(dt = 0) {
-    controls.update()
+    controls.update()                       // keeps running mid-flight so leftover momentum decays
+    if (flight.active) placeFromFlight()    // then the flight has the last word
 
     // Panning can still push the camera through the sky sphere: pull it back in.
     if (camera.position.length() > WORLD_RADIUS - 1) {
@@ -57,14 +72,24 @@ export function createMainCamera(canvas, sizes) {
    */
   function flyTo(position, seconds = CAMERA.flySeconds) {
     controls.enabled = false
-    gsap.killTweensOf([camera.position, controls.target])
+    gsap.killTweensOf([camera.position, controls.target, flight])
+
+    const from = new THREE.Spherical().setFromVector3(offset.copy(camera.position).sub(controls.target))
+    const to = new THREE.Spherical().setFromVector3(offset.set(position.x, position.y, position.z))   // relative to the board centre, where the target is heading
+    // Go round the short way. Exactly opposite sides (the usual case) always
+    // swing the same way round, so the camera circles the table like a spectator.
+    let turn = to.theta - from.theta
+    turn = Math.atan2(Math.sin(turn), Math.cos(turn))
+    if (Math.abs(Math.abs(turn) - Math.PI) < 1e-3) turn = Math.PI
+
+    Object.assign(flight, { radius: from.radius, phi: from.phi, theta: from.theta, active: true })
     gsap.to(controls.target, { x: 0, y: 0, z: 0, duration: seconds, ease: 'power2.inOut' })
-    gsap.to(camera.position, {
-      ...position,
+    gsap.to(flight, {
+      radius: to.radius, phi: to.phi, theta: from.theta + turn,
       duration: seconds,
       ease: 'power2.inOut',
-      onUpdate: () => camera.lookAt(controls.target),
-      onComplete: () => { controls.enabled = true }
+      onUpdate: placeFromFlight,
+      onComplete: () => { flight.active = false; controls.enabled = true }
     })
   }
 
