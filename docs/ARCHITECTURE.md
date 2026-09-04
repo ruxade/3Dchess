@@ -15,6 +15,8 @@ and the job is in the first comment of the file.
 | `src/chess/engine.js` | The computer opponent: three levels, pure functions on a FEN. | Make it stronger or weaker |
 | `src/chess/engine.worker.js` | Runs the engine off the main thread. | Nothing usually |
 | `src/chess/opponent.js` | Asks the worker for a move, returns a Promise. | Change thinking time |
+| `src/chess/clock.js` | The chess clock: pure, fed by tick(dt). | Change how time is counted |
+| `src/core/storage.js` | localStorage with JSON and try/catch. | Nothing usually |
 | `src/scene/effects.js` | Particle puffs on knocks and impacts. | Add effects |
 | `src/scene/highlights.js` | Legal-move markers on the board. | Change the markers |
 | `src/ui/status.js` | The "White to move" line. | Change messages |
@@ -23,16 +25,17 @@ and the job is in the first comment of the file.
 | `src/ui/gallery.js` | Gallery bar: names, arrows, caption, back. | Change captions (config PIECE_INFO) |
 | `src/ui/moves.js` | Move list, Undo and New buttons. | Change the list |
 | `src/ui/promotion.js` | "Promote to" chooser. | Nothing usually |
+| `src/ui/clocks.js` | The two clocks, top centre. | Change the clock look |
 | `tools/decimate.py` | Blender script: FBX sources to light .glb files. | Re-export after editing a model |
 | `src/core/sizes.js` | Viewport size, resize event. | Nothing usually |
 | `src/core/loading.js` | Progress bar, black fade overlay. | Change the intro |
-| `src/core/renderer.js` | WebGLRenderer, post-processing passes. | Add a visual effect (bloom, blur, colour grading) |
+| `src/core/renderer.js` | WebGLRenderer, post-processing passes (outline, bloom). | Add a visual effect (blur, colour grading) |
 | `src/scene/materials.js` | One matcap material per recolourable slot, setMatcap(). | Change how surfaces look |
 | `src/scene/board.js` | Plate, 64 squares, grid lines. | Change the board |
 | `src/scene/environment.js` | Sky sphere, fog. | Change the mood, the background |
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
 | `src/scene/gallery.js` | Gallery scene: one piece on a pedestal, own camera and orbit. | Change the gallery look |
-| `src/controls/cameras.js` | Main camera, OrbitControls. | Change how the camera moves |
+| `src/controls/cameras.js` | Main camera, OrbitControls, flights, shake. | Change how the camera moves |
 | `src/controls/drag.js` | Carry a piece above the board, hand the drop to the controller. | Change how carrying feels |
 | `src/controls/views.js` | Game mode versus gallery mode, key H. | Add a mode |
 | `src/physics/world.js` | cannon-es world: static pieces, board, floor, knock(). | Tune how pieces fly |
@@ -97,8 +100,30 @@ Two things keep pieces from overlapping: a carried piece is held at
 the rules accept it, so a friendly piece can never be landed on and a captured
 one leaves the square before the capturer settles.
 
-`window.chess` exposes `rules`, `pieces`, `camera` and `game` in the browser
-console. Try `chess.rules.fen()` or `chess.game.reset()`.
+`window.chess` exposes `rules`, `pieces`, `camera`, `game` and `passes` in the
+browser console. Try `chess.rules.fen()` or `chess.game.reset()`.
+
+## 2c. Saving, and the clock
+
+After every move, undo, new game and settings change the controller writes one
+JSON object to localStorage (`GAME_STORAGE_KEY`): the game as PGN, the
+opponent, your colour, the clock preset and the time left on each clock. When
+the page opens, `applySavedSettings()` restores the settings before the
+Settings panel is built, and `restoreSaved()` loads the PGN and runs
+`syncFromRules(true)`, which puts every piece straight onto its square
+(captured ones tumble off during the intro flight). A game with no saved state
+starts fresh. Storage that throws (private mode) is silently ignored.
+
+The clock (`chess/clock.js`) is pure and knows nothing about the DOM. Nothing
+runs until the first move. Each completed move calls `press(colour)`: the
+mover's clock stops and gets the increment, the other side starts. `tick(dt)`
+is called from the frame loop through `hooks.tick`. At zero the side has
+flagged: `onFlag` fires once, the controller treats it like checkmate (nobody
+can move, the computer stops thinking, status says who won) and undo is
+refused. Undo switches the running clock back without refunding time. A saved
+game restores its times but waits for the next move before running, so a tab
+left closed overnight does not lose on time. `ui/clocks.js` only touches the
+DOM when the text changes.
 
 ## 3. One frame
 
@@ -183,16 +208,19 @@ Next steps if you want more:
 
 Ranked by payoff for effort. Each one lives in one file.
 
-1. **Selection feedback** (`chess/controller.js`, `onHover`). The lift is in;
-   next: a brighter matcap or an outline pass on the hovered piece.
+1. **Selection feedback** (`chess/controller.js`, `onHover`). The lift and an
+   `OutlinePass` glow on the hovered or carried piece are in (Settings, Look,
+   "outline hovered piece"). Next: a brighter matcap for the side to move.
 2. **Real lighting** (`scene/materials.js`). Swap `MeshMatcapMaterial` for
    `MeshStandardMaterial` plus an environment map from `RoomEnvironment`, turn
    on shadows. The palette panel would then pick colours instead of matcaps.
 3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The intro flight
    and the glide behind the player to move are in. Next: a gentle "look at the
    piece I am holding" nudge during a drag.
-4. **Captures** (`chess/controller.js`, `capture()`). Done with physics and a
-   particle puff. Next: a camera shake on a heavy impact, or a slow-motion beat.
+4. **Captures** (`chess/controller.js`, `capture()`). Done with physics, a
+   particle puff and a camera shake on a heavy impact (`cameras.js`, `shake()`:
+   a random tilt applied after the look-at each frame, so it decays without
+   drifting). Next: a slow-motion beat.
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
    vignette, depth of field for the gallery.
@@ -230,9 +258,10 @@ your own would be the big win.
 
 `npm test` runs Vitest on the pure modules: `coords.js` (square maths),
 `rules.js` (the chess.js translation: en passant, castling, promotion, undo,
-checkmate), `physics/world.js` (a knocked piece leaves the board and arcs over
-a bystander) and `engine.js` (legal moves, free queen taken, mate in one
-found). Everything that touches WebGL is checked by eye.
+checkmate, PGN round trip), `clock.js` (first move starts it, increments,
+flagging once, undo, restore), `physics/world.js` (a knocked piece leaves the
+board and arcs over a bystander) and `engine.js` (legal moves, free queen
+taken, mate in one found). Everything that touches WebGL is checked by eye.
 
 ## 8. Models and performance
 

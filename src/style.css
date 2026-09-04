@@ -582,6 +582,75 @@ kbd {
   color: var(--accent-ink);
 }
 
+/* ---- chess clocks ---- */
+
+.clocks {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: var(--fade);
+  pointer-events: none;
+}
+
+.clocks[hidden] {
+  display: none;
+}
+
+body.ready .clocks {
+  opacity: 1;
+}
+
+body[data-mode="gallery"] .clocks {
+  opacity: 0;
+}
+
+.clock {
+  min-width: 100px;
+  padding: 8px 14px 9px;
+  display: grid;
+  gap: 1px;
+  text-align: center;
+  border-radius: var(--radius);
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  color: var(--ink-dim);
+  transition: border-color 0.3s, background 0.3s;
+}
+
+.clock .who {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.clock .time {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.clock.active {
+  border-color: var(--accent);
+  background: var(--glass-strong);
+  color: var(--ink);
+}
+
+.clock.active .time {
+  color: var(--accent);
+}
+
+.clock.active.low .time,
+.clock.flagged .time {
+  color: var(--alert);
+}
+
 /* ---- lil-gui, dressed to match ---- */
 
 .lil-gui {
@@ -652,6 +721,21 @@ kbd {
 
   .moves-list {
     max-height: 22vh;
+  }
+
+  .clocks {
+    top: auto;
+    bottom: 104px;
+    gap: 6px;
+  }
+
+  .clock {
+    min-width: 84px;
+    padding: 6px 10px 7px;
+  }
+
+  .clock .time {
+    font-size: 1rem;
   }
 
   .pill {

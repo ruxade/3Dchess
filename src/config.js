@@ -75,7 +75,12 @@ export const CAMERA = {
     dark: { x: 0, y: 10.5, z: 7.5 }
   },
   flySeconds: 1.4,
-  introSeconds: 3.5
+  introSeconds: 3.5,
+  shake: {                                // a thud when a knocked piece lands hard
+    max: 0.012,                           // radians of jitter, at most
+    perUnitSpeed: 0.0015,                 // impact speed to radians
+    decaySeconds: 0.12                    // how fast the jitter dies away
+  }
 }
 
 export const POST_FX = {
@@ -139,7 +144,14 @@ export const PHYSICS = {
 
 export const HOVER = {
   lift: 0.12,
-  seconds: 0.25
+  seconds: 0.25,
+  outline: {                // glow around the piece under the cursor (OutlinePass)
+    colour: 0xffffff,       // white reads on every palette; softer values vanish on the light pieces
+    hidden: 0x6a5a80,       // the part of the outline behind other pieces
+    strength: 8,
+    glow: 0.8,
+    thickness: 2.5
+  }
 }
 
 export const EFFECTS = {
@@ -157,3 +169,21 @@ export const OPPONENT = {
 }
 
 export const PROMOTION_CHOICES = ['queen', 'rook', 'bishop', 'knight']
+
+// Chess clocks (Settings, Game, "clock"). 'minutes' each, plus 'increment'
+// seconds added after every move. 'off' is no clock at all.
+export const CLOCK = {
+  presets: {
+    off: null,
+    '1+0': { minutes: 1, increment: 0 },
+    '3+2': { minutes: 3, increment: 2 },
+    '5+0': { minutes: 5, increment: 0 },
+    '10+0': { minutes: 10, increment: 0 },
+    '15+10': { minutes: 15, increment: 10 }
+  },
+  lowSeconds: 20    // under this the time turns orange
+}
+
+// The game in progress is written to localStorage after every move, so a
+// refresh or a closed tab does not lose it.
+export const GAME_STORAGE_KEY = '3dchess.game'

@@ -60,6 +60,25 @@ describe('rules', () => {
     expect(rules.pieceAt('e7')).toEqual({ type: 'pawn', colour: 'dark' })
   })
 
+  it('saves a game as PGN and loads it back', () => {
+    const rules = createRules()
+    rules.move('e2', 'e4'); rules.move('e7', 'e5'); rules.move('g1', 'f3')
+    const pgn = rules.pgn()
+    const again = createRules()
+    expect(again.loadPgn(pgn)).toBe(true)
+    expect(again.history()).toEqual(['e4', 'e5', 'Nf3'])
+    expect(again.turn()).toBe('dark')
+    expect(again.fen()).toBe(rules.fen())
+    expect(again.undo()).toMatchObject({ from: 'g1', to: 'f3' })   // history survives, so undo still works
+  })
+
+  it('refuses a broken PGN and keeps the current game', () => {
+    const rules = createRules()
+    rules.move('e2', 'e4')
+    expect(rules.loadPgn('1. e4 e5 2. Qxz9')).toBe(false)
+    expect(rules.history()).toEqual(['e4'])
+  })
+
   it('reports checkmate', () => {
     const rules = createRules()
     for (const [f, t] of [['f2', 'f3'], ['e7', 'e5'], ['g2', 'g4']]) rules.move(f, t)

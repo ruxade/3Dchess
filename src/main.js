@@ -21,7 +21,7 @@ import { createViews } from './controls/views.js'
 import { createPhysics } from './physics/world.js'
 import { createPhysicsDebug } from './physics/debug.js'
 import { createRules } from './chess/rules.js'
-import { createGameController } from './chess/controller.js'
+import { createGameController, applySavedSettings } from './chess/controller.js'
 import { createOpponent } from './chess/opponent.js'
 import { createGui } from './debug/gui.js'
 import { createStatus } from './ui/status.js'
@@ -30,9 +30,14 @@ import { createHelp } from './ui/help.js'
 import { createGalleryUi } from './ui/gallery.js'
 import { createMovesUi } from './ui/moves.js'
 import { createPromotionUi } from './ui/promotion.js'
+import { createClocksUi } from './ui/clocks.js'
 
 // Things the user can toggle at runtime (Settings panel). Modules read these live.
-const settings = { dragging: true, physics: true, sound: true, followTurn: true, showColliders: false, opponent: 'off', humanColour: 'light' }
+const settings = {
+  dragging: true, physics: true, sound: true, followTurn: true, cameraShake: true, showColliders: false,
+  opponent: 'off', humanColour: 'light', clock: 'off'
+}
+applySavedSettings(settings)   // opponent, colour and clock come back with the saved game
 const hooks = {}   // the settings panel calls these; the game controller fills them in once it exists
 
 // ---- 1. Scene -------------------------------------------------------------
@@ -74,6 +79,7 @@ createPalette(materials)                                    // colour panel, key
 createHelp()                                                // help panel, key ?
 const promotionUi = createPromotionUi()                     // queen, rook, bishop or knight
 const movesUi = createMovesUi({ onUndo: () => hooks.undo?.(), onNew: () => hooks.reset?.() })
+const clocksUi = createClocksUi()                           // two clocks, top centre, when a clock is set
 const opponent = createOpponent()                           // the engine, in a worker
 
 onResize(({ width, height }) => {
@@ -90,15 +96,17 @@ loadPieceGeometries(loading.manager)
     gallery.populate(geometries)
     const game = createGameController({
       rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
-      camera: mainCamera, settings, opponent, movesUi, promotionUi
+      camera: mainCamera, settings, opponent, movesUi, promotionUi, clocksUi, outline: passes.outline
     })
     dragControls.setHandlers(game)                          // drag asks the game what is allowed
     hooks.undo = game.undo
     hooks.reset = game.reset
     hooks.onOpponentChange = game.onOpponentChange
     hooks.onColourChange = game.reset
+    hooks.onClockChange = game.onClockChange
+    hooks.tick = game.tick
     // Poke at the game from the browser console: chess.rules.fen(), chess.game.reset(), ...
-    window.chess = { rules, pieces, camera: mainCamera.camera, game, dragControls, physics, physicsDebug, materials, settings, views, gui }
+    window.chess = { rules, pieces, camera: mainCamera.camera, rig: mainCamera, game, dragControls, physics, physicsDebug, materials, settings, views, gui, passes }
   })
   .catch((error) => console.error('Could not load the chess set:', error))
 
@@ -108,9 +116,10 @@ const clock = new THREE.Clock()
 function tick() {
   const dt = clock.getDelta()      // seconds since last frame
   if (views.state.mode === 'gallery') gallery.update()
-  else mainCamera.update()         // orbit damping + keep inside the world
+  else mainCamera.update(dt)       // orbit damping + keep inside the world + shake
   physics.step(dt)                 // simulate, then copy bodies onto flying pieces
   effects.update(dt)               // particles
+  hooks.tick?.(dt)                 // the chess clock
   physicsDebug.sync()              // only does work while colliders are shown
   render(views.state.current)      // game view through post FX, gallery direct
   window.requestAnimationFrame(tick)

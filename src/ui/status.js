@@ -19,5 +19,12 @@ export function createStatus() {
     show(`${side} to move`)
   }
 
-  return { show, fromRules }
+  /** A side ran out of time. */
+  function timeout(colour) {
+    const loser = colour === 'light' ? 'White' : 'Black'
+    const winner = colour === 'light' ? 'Black' : 'White'
+    show(`${loser} ran out of time. ${winner} wins. Press N for a new game.`, 'end')
+  }
+
+  return { show, fromRules, timeout }
 }

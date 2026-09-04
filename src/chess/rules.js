@@ -87,6 +87,26 @@ export function createRules(fen) {
     return chess.history()
   }
 
+  /** The whole game as PGN text, the standard way to write a game down. Used to save it. */
+  function pgn() {
+    return chess.pgn()
+  }
+
+  /**
+   * Replace the current game with one written as PGN. Returns false, and
+   * changes nothing, if the text does not parse. (chess.js would leave the
+   * game half loaded, so we try it on a scratch board first.)
+   */
+  function loadPgn(text) {
+    try {
+      new Chess().loadPgn(text)
+    } catch {
+      return false
+    }
+    chess.loadPgn(text)
+    return true
+  }
+
   function status() {
     return {
       turn: turn(),
@@ -99,7 +119,7 @@ export function createRules(fen) {
   }
 
   return {
-    turn, pieceAt, pieces, legalMoves, move, undo, history, status,
+    turn, pieceAt, pieces, legalMoves, move, undo, history, pgn, loadPgn, status,
     reset: () => chess.reset(),
     load: (nextFen) => chess.load(nextFen),
     fen: () => chess.fen()
