@@ -22,7 +22,8 @@ src_dir, out_dir = argv[0], argv[1]
 only = argv[2].split(',') if len(argv) > 2 else None
 os.makedirs(out_dir, exist_ok=True)
 
-TRIANGLE_BUDGET = {'pawn': 6000, 'rook': 5000, 'knight': 9000, 'bishop': 9000, 'queen': 14000, 'king': 14000}
+# None keeps every triangle of the source (the knight loses its face under any budget).
+TRIANGLE_BUDGET = {'pawn': 6000, 'rook': 5000, 'knight': None, 'bishop': 9000, 'queen': 14000, 'king': 14000}
 PAWN_WORLD_HEIGHT = 1.19   # measured in the game with FBX at scale 0.02
 
 def bbox(me):
@@ -54,10 +55,11 @@ for name, budget in TRIANGLE_BUDGET.items():
     me = obj.data
     tris_before = sum(len(p.vertices) - 2 for p in me.polygons)
 
-    mod = obj.modifiers.new('decimate', 'DECIMATE')
-    mod.ratio = min(1.0, budget / max(1, tris_before))
-    mod.use_collapse_triangulate = True
-    bpy.ops.object.modifier_apply(modifier='decimate')
+    if budget is not None and budget < tris_before:
+        mod = obj.modifiers.new('decimate', 'DECIMATE')
+        mod.ratio = budget / tris_before
+        mod.use_collapse_triangulate = True
+        bpy.ops.object.modifier_apply(modifier='decimate')
 
     try:
         bpy.ops.object.shade_smooth_by_angle(angle=math.radians(35))

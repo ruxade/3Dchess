@@ -274,12 +274,12 @@ runs Blender headless and writes the game-resolution .glb files:
 | queen | 152,558 | 14,000 | 2 |
 | bishop | 54,300 | 9,000 | 4 |
 | pawn | 29,248 | 6,000 | 16 |
-| knight | 12,344 | 9,000 | 4 |
+| knight | 12,344 | 12,344 (kept whole: its face goes first under any budget) | 4 |
 | rook | 4,296 | 4,296 | 4 |
 
-Per frame: about 1.4 million triangles before, 230 thousand after. Download:
-15 MB before, 1.5 MB after. To change the budgets edit `TRIANGLE_BUDGET` in the
-script and run:
+Per frame: about 1.4 million triangles before, 245 thousand after. Download:
+15 MB before, 1.6 MB after. To change the budgets edit `TRIANGLE_BUDGET` in the
+script (`None` keeps every triangle) and run:
 
 ```bash
 /Applications/Blender.app/Contents/MacOS/Blender -b --python tools/decimate.py -- design/models/fbx public/models/set/glb
