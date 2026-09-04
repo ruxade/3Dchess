@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Chess</title>
+  <link rel="icon" href="/knight.png">
+</head>
+<body>
+  <canvas class="webgl"></canvas>
+
+  <div class="loading-bar"></div>
+  <div class="loading-text">
+    <img src="/board-games.png" alt="">
+    <p>Loading</p>
+  </div>
+
+  <div class="status"></div>
+
+  <button class="fab fab-help" aria-label="Help" title="Help (?)">?</button>
+  <aside class="help panel" hidden>
+    <header><span>Controls</span></header>
+    <ul>
+      <li><img src="/icons/icons8-left-click-48.png" alt=""> Drag a piece to move it. Legal squares light up.</li>
+      <li><img src="/icons/icons8-left-click-48.png" alt=""> Left drag rotates the view</li>
+      <li><img src="/icons/icons8-middleclick-48.png" alt=""> Scroll zooms</li>
+      <li><img src="/icons/icons8-left-click-48.png" alt="" class="mirrored"> Right drag pans</li>
+      <li class="keys"><span><kbd>P</kbd> colours</span><span><kbd>H</kbd> settings</span><span><kbd>N</kbd> new game</span></li>
+      <li>
+        <span>Cameras</span>
+        <span class="camera-key" data-camera="1">1</span>
+        <span class="camera-key" data-camera="2">2</span>
+        <span class="camera-key" data-camera="3">3</span>
+        <span class="camera-key" data-camera="4">4</span>
+        <span class="camera-key" data-camera="5">5</span>
+      </li>
+    </ul>
+  </aside>
+
+  <button class="fab fab-palette" aria-label="Colours" title="Colours (P)"><span class="swatch-icon"></span></button>
+  <aside class="palette panel" hidden></aside>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
