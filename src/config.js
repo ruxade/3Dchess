@@ -75,12 +75,7 @@ export const CAMERA = {
     dark: { x: 0, y: 10.5, z: 7.5 }
   },
   flySeconds: 1.4,
-  introSeconds: 3.5,
-  shake: {                                // a thud when a knocked piece lands hard
-    max: 0.006,                           // radians of jitter, at most
-    perUnitSpeed: 0.0008,                 // impact speed to radians
-    decaySeconds: 0.12                    // how fast the jitter dies away
-  }
+  introSeconds: 3.5
 }
 
 export const POST_FX = {

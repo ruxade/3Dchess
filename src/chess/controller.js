@@ -413,7 +413,6 @@ export function createGameController({
     if (speed > EFFECTS.impactThreshold && now - lastPuff > 150) {
       lastPuff = now
       effects.burst(mesh.position.clone().setY(Math.max(mesh.position.y, -0.9)), 14)
-      if (settings.cameraShake) camera.shake(speed * CAMERA.shake.perUnitSpeed)
     }
   })
 

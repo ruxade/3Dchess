@@ -24,7 +24,6 @@ export function createGui({ scene, camera, passes, pieces, dragControls, setting
   look.add(fogState, 'density', 0, 0.15, 0.005).name('fog density').onChange((v) => { scene.fog.density = v })
   look.add(camera, 'fov', 10, 75, 1).name('field of view').onChange(() => camera.updateProjectionMatrix())
   look.add(passes.outline, 'enabled').name('outline hovered piece')
-  look.add(settings, 'cameraShake').name('camera shake on impact')
   look.add(passes.bloom, 'enabled').name('bloom')
   look.add(passes.bloom, 'strength', 0, 0.5, 0.01).name('bloom strength')
   look.add(passes.dotScreen, 'enabled').name('dot screen')

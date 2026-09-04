@@ -60,7 +60,7 @@ Three.js, chess.js, GSAP, lil-gui, cannon-es, Vite, Vitest.
 
 ## Roadmap
 
-* Visual polish: particles on capture, intro flythrough, hover outline and camera shake are in. Next: real lighting and shadows.
+* Visual polish: particles on capture, intro flythrough and hover outline are in. Next: real lighting and shadows, shattering captures.
 * Computer opponent: three rules-based levels are in. Next: an opening book, a stronger evaluation.
 * Chess rules: done (chess.js), with undo, a promotion chooser, clocks and a saved game. Next: export the PGN.
 * Multiplayer, one day.

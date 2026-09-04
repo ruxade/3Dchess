@@ -17,7 +17,6 @@ export function createMainCamera(canvas, sizes) {
   controls.maxDistance = WORLD_RADIUS - 1
 
   const centre = new THREE.Vector3(0, 0, 0)
-  let jitter = 0   // radians of camera shake still to play out
 
   // A flight is tweened in orbit coordinates around the target (radius, phi
   // down from the zenith, theta around), so the camera swings round the board.
@@ -33,8 +32,8 @@ export function createMainCamera(canvas, sizes) {
     camera.lookAt(controls.target)
   }
 
-  /** Call once per frame with the frame time. Damping needs the update to keep moving. */
-  function update(dt = 0) {
+  /** Call once per frame. Damping needs the update to keep moving. */
+  function update() {
     controls.update()                       // keeps running mid-flight so leftover momentum decays
     if (flight.active) placeFromFlight()    // then the flight has the last word
 
@@ -43,22 +42,6 @@ export function createMainCamera(canvas, sizes) {
       camera.position.sub(centre).setLength(WORLD_RADIUS - 1).add(centre)
     }
     if (camera.position.y < 0) camera.position.y = 0
-
-    // Shake is a small random tilt applied after the look-at, so it never
-    // accumulates: controls.update() points the camera at the target again next frame.
-    if (jitter > 0.0003) {
-      camera.rotateX((Math.random() - 0.5) * 2 * jitter)
-      camera.rotateY((Math.random() - 0.5) * 2 * jitter)
-      camera.rotateZ((Math.random() - 0.5) * jitter)
-      jitter *= Math.exp(-dt / CAMERA.shake.decaySeconds)
-    } else {
-      jitter = 0
-    }
-  }
-
-  /** A thud: `radians` of jitter that dies away over CAMERA.shake.decaySeconds. */
-  function shake(radians) {
-    jitter = Math.max(jitter, Math.min(CAMERA.shake.max, radians))
   }
 
   function setAspect(aspect) {
@@ -100,5 +83,5 @@ export function createMainCamera(canvas, sizes) {
 
   const view = { scene: null, camera, postFx: true, update }   // scene is filled in by main.js
 
-  return { camera, controls, view, update, setAspect, flyTo, flyToSide, shake }
+  return { camera, controls, view, update, setAspect, flyTo, flyToSide }
 }

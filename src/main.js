@@ -37,7 +37,7 @@ import { PHYSICS } from './config.js'
 
 // Things the user can toggle at runtime (Settings panel). Modules read these live.
 const settings = {
-  dragging: true, physics: true, knockStrength: PHYSICS.knockStrength, sound: true, followTurn: true, cameraShake: true, showColliders: false,
+  dragging: true, physics: true, knockStrength: PHYSICS.knockStrength, sound: true, followTurn: true, showColliders: false,
   opponent: 'off', humanColour: 'light', clock: 'off'
 }
 applySavedSettings(settings)   // opponent, colour and clock come back with the saved game
@@ -123,7 +123,7 @@ const clock = new THREE.Clock()
 
 function tick() {
   const dt = clock.getDelta()      // seconds since last frame
-  views.state.current.update(dt)   // game: orbit damping + shake; gallery: turntable; victory: spin + puffs
+  views.state.current.update(dt)   // game: orbit damping; gallery: turntable; victory: spin + puffs
   physics.step(dt)                 // simulate, then copy bodies onto flying pieces
   effects.update(dt)               // particles
   hooks.tick?.(dt)                 // the chess clock

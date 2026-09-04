@@ -37,7 +37,7 @@ and the job is in the first comment of the file.
 | `src/scene/gallery.js` | Gallery scene: one piece on a pedestal, own camera and orbit. | Change the gallery look |
 | `src/scene/victory.js` | Victory scene: the winner's pawn spinning, puffs. | Change the celebration |
 | `src/ui/victory.js` | Victory words and buttons. | Change the wording |
-| `src/controls/cameras.js` | Main camera, OrbitControls, flights, shake. | Change how the camera moves |
+| `src/controls/cameras.js` | Main camera, OrbitControls, flights round the board. | Change how the camera moves |
 | `src/controls/drag.js` | Carry a piece above the board, hand the drop to the controller. | Change how carrying feels |
 | `src/controls/views.js` | Game, gallery and victory modes, key H. | Add a mode |
 | `src/physics/world.js` | cannon-es world: static pieces, board, floor, knock(). | Tune how pieces fly |
@@ -231,10 +231,10 @@ Ranked by payoff for effort. Each one lives in one file.
 3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The intro flight
    and the glide behind the player to move are in. Next: a gentle "look at the
    piece I am holding" nudge during a drag.
-4. **Captures** (`chess/controller.js`, `capture()`). Done with physics, a
-   particle puff and a camera shake on a heavy impact (`cameras.js`, `shake()`:
-   a random tilt applied after the look-at each frame, so it decays without
-   drifting). Next: a slow-motion beat.
+4. **Captures** (`chess/controller.js`, `capture()`). Done with physics and a
+   particle puff. A camera shake was tried and removed: it read as the whole
+   scene vibrating. Next: pieces that shatter into fragments (pre-fractured in
+   Blender, one body per shard), or a slow-motion beat.
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
    vignette, depth of field for the gallery.
