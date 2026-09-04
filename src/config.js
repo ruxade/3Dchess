@@ -148,6 +148,22 @@ export const PHYSICS = {
   travelWeight: 0.6      // how much the capturer's line of travel bends the shove (0 = straight to the nearest edge)
 }
 
+// Shattering captures (Settings, Game, captures: shatter). The taken piece is
+// cut into shards at runtime (three-pinata), one physics body each.
+export const SHATTER = {
+  fragmentsPerUnit: 5,  // shards per unit of piece height: a pawn breaks into 6, a king into 9
+  minFragments: 5,
+  insideShade: 0.55,    // the cut faces use the piece's own matcap, darkened by this
+  spread: 2.2,          // outward speed of the shards, at knock strength 1
+  carry: 1.5,           // how much of the capturer's direction the shards keep
+  lift: 3.0,            // upward speed
+  spin: 10,             // radians per second, at strength 1
+  lifeSeconds: 6,       // debris lies around this long
+  fadeSeconds: 0.6      // then shrinks away
+}
+
+export const CAPTURE_STYLES = ['knock', 'shatter', 'glide']
+
 export const HOVER = {
   lift: 0.12,
   seconds: 0.25,

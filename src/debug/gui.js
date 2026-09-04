@@ -2,7 +2,7 @@
 // Each control edits a live object, so changes show instantly. Key H hides it.
 
 import GUI from 'lil-gui'
-import { FOG, OPPONENT, CLOCK } from '../config.js'
+import { FOG, OPPONENT, CLOCK, CAPTURE_STYLES } from '../config.js'
 
 export function createGui({ scene, camera, passes, pieces, dragControls, settings, physicsDebug, hooks }) {
   const gui = new GUI({ title: 'Settings', width: 230 })
@@ -13,7 +13,7 @@ export function createGui({ scene, camera, passes, pieces, dragControls, setting
   game.add(settings, 'humanColour', { white: 'light', black: 'dark' }).name('you play').onChange(() => hooks.onColourChange?.())
   game.add(settings, 'clock', Object.keys(CLOCK.presets)).name('clock').onChange(() => hooks.onClockChange?.())
   game.add(settings, 'followTurn').name('camera follows turn')
-  game.add(settings, 'physics').name('knock captured pieces')
+  game.add(settings, 'captures', CAPTURE_STYLES).name('captures')
   game.add(settings, 'knockStrength', 0.4, 1, 0.05).name('knock strength')
   game.add(settings, 'sound').name('sound')
   game.add(settings, 'dragging').name('allow dragging').onChange((v) => { dragControls.enabled = v })

@@ -16,14 +16,16 @@ npm run preview   # serve the production build locally
 npm test          # unit tests for the square maths and the rules wrapper
 ```
 
-Node 22 and npm. Vite is the only build tool.
+Node 22 and npm. Vite is the only build tool. `.npmrc` sets `legacy-peer-deps`
+because three-pinata declares an older Three.js range than the one in use; it
+works fine with the current one.
 
 ## Controls
 
 * Left drag rotates, scroll zooms, right drag pans.
 * Click and drag a piece to move it. Legal squares light up, illegal drops bounce back, captures slide off to the side.
 * Only the side to move can be picked up. N starts a new game.
-* Captured pieces get knocked off the board (cannon-es physics). The camera glides behind the player to move.
+* Captured pieces shatter into shards (cut at runtime, cannon-es physics), or get knocked off the board, or glide to the side: Settings, Game, "captures". The camera glides round behind the player to move.
 * Play the computer: Settings, Game, "computer plays" (beginner, casual, club). U undoes, the move list is top left.
 * Chess clock: Settings, Game, "clock" (1+0 to 15+10). Run out of time and the game is over.
 * The game is saved after every move. Close the tab, come back, carry on.
@@ -56,11 +58,11 @@ docs/ARCHITECTURE.md  the walkthrough: how a frame works, how to add physics, id
 
 ## Stack
 
-Three.js, chess.js, GSAP, lil-gui, cannon-es, Vite, Vitest.
+Three.js, chess.js, GSAP, lil-gui, cannon-es, three-pinata (runtime mesh fracture), Vite, Vitest.
 
 ## Roadmap
 
-* Visual polish: particles on capture, intro flythrough and hover outline are in. Next: real lighting and shadows, shattering captures.
+* Visual polish: shattering captures, particles, intro flythrough and hover outline are in. Next: real lighting and shadows.
 * Computer opponent: three rules-based levels are in. Next: an opening book, a stronger evaluation.
 * Chess rules: done (chess.js), with undo, a promotion chooser, clocks and a saved game. Next: export the PGN.
 * Multiplayer, one day.

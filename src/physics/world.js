@@ -31,7 +31,7 @@ export function createPhysics() {
   world.addBody(board)
   world.addBody(floor)
 
-  const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength }
+  const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength, centred }
   const impactListeners = new Set()
   const up = new THREE.Vector3(0, 1, 0)
   const scratch = new THREE.Vector3()
@@ -48,15 +48,11 @@ export function createPhysics() {
   function addPiece(mesh) {
     const { shape, halfHeight } = shapeFor(mesh)
     const body = new CANNON.Body({ type: CANNON.Body.STATIC, shape })
-    const entry = { body, halfHeight, dynamic: false, strength: 1 }
+    const entry = { body, halfHeight, dynamic: false, strength: 1, centred: false }
     entries.set(mesh, entry)
     follow(mesh)
     world.addBody(body)
-
-    body.addEventListener('collide', (event) => {
-      const speed = Math.abs(event.contact.getImpactVelocityAlongNormal())
-      impactListeners.forEach((fn) => fn(mesh, speed))
-    })
+    reportImpacts(mesh, body)
     // A knocked piece that dozes off while still on the board gets one more shove.
     body.addEventListener('sleep', () => {
       if (!entry.dynamic) return
@@ -86,6 +82,41 @@ export function createPhysics() {
     const speed = ((Math.max(0, toEdge) + reach) / along / flightTime) * PHYSICS.knockSpeedFactor
     body.velocity.set(direction.x * speed, lift, direction.z * speed)
     return lift
+  }
+
+  function reportImpacts(mesh, body) {
+    body.addEventListener('collide', (event) => {
+      const speed = Math.abs(event.contact.getImpactVelocityAlongNormal())
+      impactListeners.forEach((fn) => fn(mesh, speed))
+    })
+  }
+
+  /**
+   * A shard of a shattered piece: a dynamic box the size of the fragment,
+   * already moving. The mesh's origin is its centre, so mesh and body coincide.
+   */
+  function addFragment(mesh, size, velocity, angularVelocity) {
+    const shape = new CANNON.Box(new CANNON.Vec3(Math.max(0.03, size.x / 2), Math.max(0.03, size.y / 2), Math.max(0.03, size.z / 2)))
+    const body = new CANNON.Body({
+      mass: Math.max(0.05, size.x * size.y * size.z * 2),
+      shape,
+      position: new CANNON.Vec3(mesh.position.x, mesh.position.y, mesh.position.z)
+    })
+    body.quaternion.set(mesh.quaternion.x, mesh.quaternion.y, mesh.quaternion.z, mesh.quaternion.w)
+    body.velocity.set(velocity.x, velocity.y, velocity.z)
+    body.angularVelocity.set(angularVelocity.x, angularVelocity.y, angularVelocity.z)
+    body.linearDamping = PHYSICS.knockDamping.linear
+    body.angularDamping = PHYSICS.knockDamping.angular
+    world.addBody(body)
+    entries.set(mesh, { body, halfHeight: 0, dynamic: true, strength: 1, centred: true })
+    reportImpacts(mesh, body)
+  }
+
+  /** Sink a standing piece's body far below the board (the piece shattered). restore() brings it back. */
+  function park(mesh) {
+    const entry = entries.get(mesh)
+    if (!entry || entry.dynamic) return
+    entry.body.position.y = -50
   }
 
   /** Move a STATIC body to wherever its mesh now stands (after a move animation). */
@@ -159,9 +190,10 @@ export function createPhysics() {
   /** Advance the simulation and copy every dynamic body onto its mesh. */
   function step(dt) {
     world.step(1 / 60, dt, 3)   // fixed 60 Hz steps, at most 3 per frame
-    for (const [mesh, { body, halfHeight, dynamic }] of entries) {
+    for (const [mesh, { body, halfHeight, dynamic, centred }] of entries) {
       if (!dynamic) continue
       mesh.quaternion.copy(body.quaternion)
+      if (centred) { mesh.position.copy(body.position); continue }   // shards: origin at the middle
       // body.position is the centre of the cylinder, mesh.position is its base
       scratch.set(0, halfHeight, 0).applyQuaternion(mesh.quaternion)
       mesh.position.copy(body.position).sub(scratch)
@@ -173,5 +205,5 @@ export function createPhysics() {
     return () => impactListeners.delete(fn)
   }
 
-  return { world, entries, addPiece, follow, knock, restore, reshape, remove, clear, step, onImpact }
+  return { world, entries, addPiece, addFragment, park, follow, knock, restore, reshape, remove, clear, step, onImpact }
 }

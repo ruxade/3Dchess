@@ -18,6 +18,7 @@ and the job is in the first comment of the file.
 | `src/chess/clock.js` | The chess clock: pure, fed by tick(dt). | Change how time is counted |
 | `src/core/storage.js` | localStorage with JSON and try/catch. | Nothing usually |
 | `src/scene/effects.js` | Particle puffs on knocks and impacts. | Add effects |
+| `src/scene/shatter.js` | Shattering captures: cut a piece into shards, fling them. | Change how pieces break |
 | `src/scene/highlights.js` | Legal-move markers on the board. | Change the markers |
 | `src/ui/status.js` | The "White to move" line. | Change messages |
 | `src/ui/palette.js` | Colour panel: slots, swatches, presets, localStorage. | Add a preset, a slot |
@@ -182,7 +183,14 @@ Three.js draws, cannon-es simulates. Every piece has a Body next to its Mesh.
   controller calls `physics.follow(mesh)` so the body catches up.
 * **The board is a box** whose top is `y = 0`; **the floor is a plane** at the
   plate top. Nothing falls forever.
-* **A capture calls `physics.knock(mesh, travel)`**: the body turns DYNAMIC and
+* **A shattering capture** (`scene/shatter.js`) hides the piece, parks its
+  body far below the board (`physics.park`) and adds one DYNAMIC box body per
+  shard (`physics.addFragment`, origin at the shard's centre so mesh and body
+  coincide). The shards are cut from the piece's geometry by three-pinata,
+  once per type in idle time after loading (`warmUp`), then cloned per
+  capture; cut faces get the piece's matcap darkened. Debris shrinks away
+  after `SHATTER.lifeSeconds`; undo removes it and shows the piece again.
+* **A knocking capture calls `physics.knock(mesh, travel)`**: the body turns DYNAMIC and
   is shoved towards the nearest board edge, bent a little along the capturer's
   line of travel (`travelWeight`), with `knockSpeed` sideways, `knockLift` up
   (enough to arc over standing pieces) and `knockSpin` end over end. From then on `step()` copies the body's position
@@ -231,10 +239,10 @@ Ranked by payoff for effort. Each one lives in one file.
 3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The intro flight
    and the glide behind the player to move are in. Next: a gentle "look at the
    piece I am holding" nudge during a drag.
-4. **Captures** (`chess/controller.js`, `capture()`). Done with physics and a
-   particle puff. A camera shake was tried and removed: it read as the whole
-   scene vibrating. Next: pieces that shatter into fragments (pre-fractured in
-   Blender, one body per shard), or a slow-motion beat.
+4. **Captures** (`chess/controller.js`, `capture()`). Three styles under
+   Settings, Game: shatter (default), knock, glide. A camera shake was tried
+   and removed: it read as the whole scene vibrating. Next: a slow-motion beat,
+   or pre-fractured shards from Blender if the runtime cut ever stutters on a phone.
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
    vignette, depth of field for the gallery.

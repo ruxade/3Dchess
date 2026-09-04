@@ -11,7 +11,7 @@
 
 import * as THREE from 'three'
 import { gsap } from 'gsap'
-import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, GAME_STORAGE_KEY } from '../config.js'
+import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, CAPTURE_STYLES, GAME_STORAGE_KEY } from '../config.js'
 import { nameToSquare, squareName, squareToWorld } from './coords.js'
 import { createClock } from './clock.js'
 import { createPieceSet } from '../scene/pieces.js'
@@ -24,11 +24,12 @@ export function applySavedSettings(settings) {
   if (OPPONENT.levels.includes(saved.opponent)) settings.opponent = saved.opponent
   if (saved.humanColour === 'light' || saved.humanColour === 'dark') settings.humanColour = saved.humanColour
   if (saved.clock in CLOCK.presets) settings.clock = saved.clock
+  if (CAPTURE_STYLES.includes(saved.captures)) settings.captures = saved.captures
 }
 
 export function createGameController({
   rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
-  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline, celebrate
+  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline, celebrate, shatter
 }) {
   const bySquare = new Map()                 // 'e2' -> mesh
   const captured = { light: 0, dark: 0 }     // graveyard slots used (physics off)
@@ -203,24 +204,26 @@ export function createGameController({
   }
 
   /**
-   * A piece has been taken. With physics on, the capturer's direction of
-   * travel becomes a shove and the simulation takes over. With physics off,
-   * the piece glides to a graveyard slot beside the board.
+   * A piece has been taken. Settings, Game, "captures" decides how it goes:
+   * 'knock' shoves it off the board (the capturer's direction of travel bends
+   * the shove), 'shatter' cuts it into shards that fly apart, 'glide' slides it
+   * to a graveyard slot beside the board. `style` overrides the setting.
    */
-  function capture(piece, fromSquare, toSquare) {
+  function capture(piece, fromSquare, toSquare, style = settings.captures) {
     piece.userData.captured = true
     piece.userData.col = -1
     piece.userData.row = -1
     gsap.killTweensOf(piece.position)
 
-    if (settings.physics) {
+    if (style !== 'glide') {
       const travel = new THREE.Vector3()
       if (fromSquare && toSquare) {
         const a = worldOf(fromSquare), b = worldOf(toSquare)
         travel.set(b.x - a.x, 0, b.z - a.z).normalize()
       }
-      physics.knock(piece, travel, settings.knockStrength)
-      effects.burst(new THREE.Vector3(piece.position.x, 0.6, piece.position.z))
+      const shattered = style === 'shatter' && shatter.shatter(piece, travel, settings.knockStrength)
+      if (!shattered) physics.knock(piece, travel, settings.knockStrength)
+      effects.burst(new THREE.Vector3(piece.position.x, 0.6, piece.position.z), shattered ? EFFECTS.burstCount * 1.5 : EFFECTS.burstCount)
       return
     }
 
@@ -235,10 +238,11 @@ export function createGameController({
       .to(piece.position, { y: 0, duration: 0.25, ease: 'bounce.out' })
   }
 
-  /** A captured piece comes back (undo): upright, static again. */
+  /** A captured piece comes back (undo): whole, upright, static again. */
   function restore(piece) {
     piece.userData.captured = false
     piece.rotation.set(0, piece.userData.colour === 'dark' ? Math.PI : 0, 0)
+    shatter.restore(piece)
     physics.restore(piece)
   }
 
@@ -286,7 +290,8 @@ export function createGameController({
         flyTo(m, w.square, 0.7)
       }
     }
-    for (const m of free) if (!m.userData.captured) capture(m, null, null)
+    // Pieces that simply should not be there (a loaded position) are knocked, not shattered: nothing captured them.
+    for (const m of free) if (!m.userData.captured) capture(m, null, null, settings.captures === 'shatter' ? 'knock' : settings.captures)
 
     index()
     refresh()
@@ -320,6 +325,7 @@ export function createGameController({
     select(null)
     clock?.reset()
     gsap.killTweensOf(pieces.children.map((p) => p.position))
+    shatter.clear()
     physics.clear()
     pieces.clear()
     createPieceSet(geometries, materials, pieces)
@@ -390,7 +396,7 @@ export function createGameController({
   function persist() {
     saveJson(GAME_STORAGE_KEY, {
       pgn: rules.pgn(),
-      settings: { opponent: settings.opponent, humanColour: settings.humanColour, clock: settings.clock },
+      settings: { opponent: settings.opponent, humanColour: settings.humanColour, clock: settings.clock, captures: settings.captures },
       clock: clock ? { light: clock.remaining('light'), dark: clock.remaining('dark') } : null
     })
   }
