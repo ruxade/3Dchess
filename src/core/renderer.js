@@ -23,7 +23,7 @@ export function createRenderer(canvas, scene, camera) {
   composer.setPixelRatio(sizes.pixelRatio)
 
   // Pass 1: draw the main scene. The composer is tied to THIS scene and camera,
-  // which is why the showcase views bypass it and use renderer.render directly.
+  // which is why the gallery bypasses it and uses renderer.render directly.
   composer.addPass(new RenderPass(scene, camera))
 
   const dotScreen = new DotScreenPass()

@@ -7,22 +7,28 @@ import * as THREE from 'three'
 import { sizes, onResize } from './core/sizes.js'
 import { createLoading } from './core/loading.js'
 import { createRenderer, enableFullscreenOnDoubleClick } from './core/renderer.js'
+import { createSound } from './core/sound.js'
 import { createMaterials } from './scene/materials.js'
 import { createEnvironment } from './scene/environment.js'
 import { createBoard } from './scene/board.js'
 import { loadPieceGeometries, createPieceSet } from './scene/pieces.js'
-import { createShowcase } from './scene/showcase.js'
+import { createHighlights } from './scene/highlights.js'
+import { createGallery } from './scene/gallery.js'
 import { createMainCamera } from './controls/cameras.js'
 import { createDragControls } from './controls/drag.js'
 import { createViews } from './controls/views.js'
 import { createPhysics } from './physics/world.js'
-import { createHighlights } from './scene/highlights.js'
+import { createPhysicsDebug } from './physics/debug.js'
 import { createRules } from './chess/rules.js'
 import { createGameController } from './chess/controller.js'
+import { createGui } from './debug/gui.js'
 import { createStatus } from './ui/status.js'
 import { createPalette, loadSavedPalette } from './ui/palette.js'
 import { createHelp } from './ui/help.js'
-import { createGui } from './debug/gui.js'
+import { createGalleryUi } from './ui/gallery.js'
+
+// Things the user can toggle at runtime (Settings panel). Modules read these live.
+const settings = { dragging: true, physics: true, sound: true, followTurn: true, showColliders: false }
 
 // ---- 1. Scene -------------------------------------------------------------
 const canvas = document.querySelector('canvas.webgl')
@@ -33,53 +39,52 @@ const textureLoader = new THREE.TextureLoader(loading.manager)
 const materials = createMaterials(textureLoader, loadSavedPalette())   // remembers your colours
 
 createEnvironment(scene, materials)                         // sky sphere + fog
+materials.onSky((colour) => scene.fog.color.copy(colour))   // fog always matches the sky
 scene.add(createBoard(materials))                           // plate + 64 squares + grid
 
 const pieces = new THREE.Group()                            // filled once models load
 pieces.name = 'pieces'
 scene.add(pieces)
 
-const showcase = createShowcase(materials, sizes)           // scene for views 2 to 5
+const highlights = createHighlights(scene)                  // legal-move markers
+const gallery = createGallery(materials, canvas, sizes)     // key G: one piece on a turntable
 
 // ---- 2. Camera, rendering, controls ---------------------------------------
 const mainCamera = createMainCamera(canvas, sizes)
+mainCamera.view.scene = scene
 const { render, passes } = createRenderer(canvas, scene, mainCamera.camera)
 enableFullscreenOnDoubleClick(canvas)
 
-const settings = { dragging: true }                         // user toggles live here
 const dragControls = createDragControls(mainCamera.camera, canvas, mainCamera.controls)
-const physics = createPhysics()                             // empty world, ready to use
+const physics = createPhysics()                             // bodies for pieces, board, floor
+const physicsDebug = createPhysicsDebug(physics, scene)     // wireframes, off by default
+const sound = createSound(settings)
 
-const gui = createGui({ scene, camera: mainCamera.camera, passes, pieces, dragControls, settings })
-const views = createViews({
-  main: { scene, camera: mainCamera.camera },
-  showcase,
-  orbitControls: mainCamera.controls,
-  dragControls,
-  gui,
-  settings
-})
-
-onResize(({ width, height }) => {
-  mainCamera.setAspect(width / height)
-  showcase.setAspect(width / height)
-})
-
-// ---- 3. Load the pieces, then start the game (async) ----------------------
-const rules = createRules()                                 // chess.js behind a small API
-const highlights = createHighlights(scene)                  // legal-move markers
+const gui = createGui({ scene, camera: mainCamera.camera, passes, pieces, dragControls, settings, physicsDebug })
+const views = createViews({ game: mainCamera, gallery, dragControls, gui, settings, onChange: (mode) => { if (mode === 'gallery') galleryUi.render() } })
+const galleryUi = createGalleryUi({ gallery, views })
 const status = createStatus()                               // "White to move" line
 createPalette(materials)                                    // colour panel, key P
 createHelp()                                                // help panel, key ?
 
+onResize(({ width, height }) => {
+  mainCamera.setAspect(width / height)
+  gallery.setAspect(width / height)
+})
+
+// ---- 3. Load the pieces, then start the game (async) ----------------------
+const rules = createRules()                                 // chess.js behind a small API
+
 loadPieceGeometries(loading.manager)
   .then((geometries) => {
     createPieceSet(geometries, materials, pieces)
-    showcase.populate(geometries)
-    const game = createGameController({ rules, pieces, geometries, materials, highlights, status, dragControls })
+    gallery.populate(geometries)
+    const game = createGameController({
+      rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, camera: mainCamera, settings
+    })
     dragControls.setHandlers(game)                          // drag asks the game what is allowed
-    // Poke at the game from the browser console: chess.rules.fen(), chess.pieces.children, ...
-    window.chess = { rules, pieces, camera: mainCamera.camera, game, dragControls }
+    // Poke at the game from the browser console: chess.rules.fen(), chess.game.reset(), ...
+    window.chess = { rules, pieces, camera: mainCamera.camera, game, dragControls, physics, physicsDebug, materials, settings, views, gui }
   })
   .catch((error) => console.error('Could not load the chess set:', error))
 
@@ -88,9 +93,11 @@ const clock = new THREE.Clock()
 
 function tick() {
   const dt = clock.getDelta()      // seconds since last frame
-  mainCamera.update()              // orbit damping + keep inside the world
-  physics.step(dt)                 // no bodies yet, so this is a no-op for now
-  render(views.current)            // main view through post FX, showcase direct
+  if (views.state.mode === 'gallery') gallery.update()
+  else mainCamera.update()         // orbit damping + keep inside the world
+  physics.step(dt)                 // simulate, then copy bodies onto flying pieces
+  physicsDebug.sync()              // only does work while colliders are shown
+  render(views.state.current)      // game view through post FX, gallery direct
   window.requestAnimationFrame(tick)
 }
 

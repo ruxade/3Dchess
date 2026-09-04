@@ -21,7 +21,7 @@ export function createDragControls(camera, canvas, orbitControls) {
   const carryPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0)
   const hit = new THREE.Vector3()
   const grabOffset = new THREE.Vector3()
-  let handlers = { onPickUp() {}, onCarry() {}, onDrop() {} }
+  let handlers = { onPickUp() {}, onCarry() {}, onDrop() {}, onHover() {} }
 
   /** The game controller registers its onPickUp / onCarry / onDrop here. */
   function setHandlers(next) {
@@ -54,8 +54,14 @@ export function createDragControls(camera, canvas, orbitControls) {
     handlers.onDrop(object, worldToSquare(object.position.x, object.position.z))
   })
 
-  controls.addEventListener('hoveron', () => { canvas.style.cursor = 'grab' })
-  controls.addEventListener('hoveroff', () => { canvas.style.cursor = '' })
+  controls.addEventListener('hoveron', ({ object }) => {
+    canvas.style.cursor = 'grab'
+    handlers.onHover(object, true)
+  })
+  controls.addEventListener('hoveroff', ({ object }) => {
+    canvas.style.cursor = ''
+    handlers.onHover(object, false)
+  })
 
   controls.setHandlers = setHandlers
   return controls

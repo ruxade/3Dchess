@@ -179,6 +179,128 @@ body.ready .lil-gui.root {
   box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.25);
 }
 
+/* ---- gallery ---- */
+
+.pill {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: 21;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--line);
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  transition: var(--fade), background 0.2s;
+}
+
+body.ready .pill {
+  opacity: 1;
+}
+
+.pill:hover {
+  background: var(--glass-strong);
+}
+
+body[data-mode="gallery"] .pill,
+body[data-mode="gallery"] .fab-help,
+body[data-mode="gallery"] .status,
+body[data-mode="gallery"] .help {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gallery-bar {
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%) translateY(20px);
+  width: min(720px, calc(100vw - 48px));
+  padding: 18px 20px 16px;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+body[data-mode="gallery"] .gallery-bar {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.gallery-name {
+  font-size: 1.6rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.gallery-line {
+  margin-top: 4px;
+  color: var(--ink-dim);
+  font-size: 0.95rem;
+}
+
+.gallery-stats {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.gallery-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.gallery-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.chip,
+.arrow,
+.back {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 0.85rem;
+  color: var(--ink-dim);
+}
+
+.chip:hover,
+.arrow:hover,
+.back:hover {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.chip.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.arrow {
+  font-size: 1.2rem;
+  line-height: 1;
+  padding: 4px 12px;
+}
+
+.back {
+  margin-left: 12px;
+}
+
 /* ---- help ---- */
 
 .help {
@@ -233,22 +355,6 @@ kbd {
   text-align: center;
 }
 
-.camera-key {
-  display: inline-block;
-  min-width: 1.6em;
-  padding: 1px 6px;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid var(--line);
-  font-size: 0.8rem;
-  text-align: center;
-  cursor: pointer;
-}
-
-.camera-key.active {
-  background: var(--accent);
-  color: var(--accent-ink);
-}
 
 /* ---- palette ---- */
 

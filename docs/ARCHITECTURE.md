@@ -16,6 +16,7 @@ and the job is in the first comment of the file.
 | `src/ui/status.js` | The "White to move" line. | Change messages |
 | `src/ui/palette.js` | Colour panel: slots, swatches, presets, localStorage. | Add a preset, a slot |
 | `src/ui/help.js` | The controls panel toggle. | Nothing usually |
+| `src/ui/gallery.js` | Gallery bar: names, arrows, caption, back. | Change captions (config PIECE_INFO) |
 | `tools/decimate.py` | Blender script: FBX sources to light .glb files. | Re-export after editing a model |
 | `src/core/sizes.js` | Viewport size, resize event. | Nothing usually |
 | `src/core/loading.js` | Progress bar, black fade overlay. | Change the intro |
@@ -24,11 +25,13 @@ and the job is in the first comment of the file.
 | `src/scene/board.js` | Plate, 64 squares, grid lines. | Change the board |
 | `src/scene/environment.js` | Sky sphere, fog. | Change the mood, the background |
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
-| `src/scene/showcase.js` | Spinning pieces for camera views 2 to 5. | Change the showcase |
+| `src/scene/gallery.js` | Gallery scene: one piece on a pedestal, own camera and orbit. | Change the gallery look |
 | `src/controls/cameras.js` | Main camera, OrbitControls. | Change how the camera moves |
 | `src/controls/drag.js` | Carry a piece above the board, hand the drop to the controller. | Change how carrying feels |
-| `src/controls/views.js` | Keys 1 to 5, key H. | Add a view or a shortcut |
-| `src/physics/world.js` | cannon-es world (ground only so far). | Add physics |
+| `src/controls/views.js` | Game mode versus gallery mode, key H. | Add a mode |
+| `src/physics/world.js` | cannon-es world: static pieces, board, floor, knock(). | Tune how pieces fly |
+| `src/physics/debug.js` | Wireframe colliders (Settings, Debug, show colliders). | Nothing usually |
+| `src/core/sound.js` | The click sample, volume by impact. | Add sounds |
 | `src/debug/gui.js` | The Settings panel (lil-gui). | Expose a new slider |
 
 `public/` is served at the site root, so `/models/set/glb/king.glb` on disk is
@@ -40,10 +43,12 @@ shipped: the original FBX models and the Photoshop file of the icon.
 `main.js` runs top to bottom, in four numbered blocks:
 
 1. **Scene.** One `THREE.Scene`. Into it go the fade overlay, sky sphere, fog,
-   board and an empty `pieces` group. A second tiny scene is made for the showcase.
+   board and an empty `pieces` group. A second small scene is made for the gallery.
+   The fog colour is the average colour of the sky matcap, so recolouring the
+   sky recolours the haze too.
 2. **Camera, rendering, controls.** The camera and its orbit controls, the
-   renderer with its post-processing chain, drag controls, the empty physics
-   world, the settings panel, the view switcher.
+   renderer with its post-processing chain, drag controls, the physics world
+   (board and floor bodies), the settings panel, the game/gallery switch.
 3. **Load the pieces.** Async. The six .glb files download (1.5 MB in total),
    get flattened into six geometries, then 32 meshes are placed. Meanwhile the
    loading bar fills from `LoadingManager` callbacks.
@@ -67,7 +72,11 @@ pointer up                       DragControls fires dragend
        legal   -> description    settle(piece), capture(...), castle rook, promote
                                  refreshDraggable(): only the other side is grabbable now
                                  status.fromRules(): "Black to move", "Check!", "Checkmate..."
+                                 camera.flyToSide(turn): glide behind the player to move
 ```
+
+Hovering a grabbable piece lifts it a little (onHover). Every settled piece
+tells physics.follow() where its body now stands.
 
 Two things keep pieces from overlapping: a carried piece is held at
 `DRAG.liftHeight` (above the tallest piece), and a drop is only accepted when
@@ -83,12 +92,14 @@ console. Try `chess.rules.fen()` or `chess.game.reset()`.
 tick()
   dt = clock.getDelta()      seconds since last frame, for physics and animation
   mainCamera.update()        orbit damping, keep the camera inside the sky sphere
-  physics.step(dt)           advance the simulation, copy body poses onto meshes
-  render(views.current)      view 1 goes through EffectComposer, views 2 to 5 render directly
+                             (gallery.update() instead while the gallery is open)
+  physics.step(dt)           advance the simulation, copy dynamic bodies onto meshes
+  physicsDebug.sync()        move the wireframes, only while they are visible
+  render(views.current)      the game goes through EffectComposer, the gallery renders directly
   requestAnimationFrame(tick)
 ```
 
-GSAP animations (the showcase spin, the overlay fade) run on their own ticker,
+GSAP animations (piece moves, camera glides, the overlay fade) run on their own ticker,
 so they do not appear here.
 
 ## 4. Coordinates
@@ -120,71 +131,57 @@ why the first version of this code had to bake a rotation and a 0.02 scale.)
 All 8 pawns share one geometry on the GPU. `new Mesh(geometry, material)` does
 not copy vertex data.
 
-## 6. Adding physics (the recipe)
+## 6. Physics (what is in, how to play with it)
 
-`physics/world.js` already has a world with gravity and a static ground plane
-at `y = 0`. Nothing is linked to it yet, so the game behaves exactly as before.
+Three.js draws, cannon-es simulates. Every piece has a Body next to its Mesh.
 
-To make one piece fall and tumble:
+* **Standing pieces are STATIC bodies**: tapered cylinders fitted to the
+  bounding box (`PHYSICS.topRadiusRatio`). The simulation never moves them,
+  but flying pieces bounce off them. When a piece settles on a new square the
+  controller calls `physics.follow(mesh)` so the body catches up.
+* **The board is a box** whose top is `y = 0`; **the floor is a plane** at the
+  plate top. Nothing falls forever.
+* **A capture calls `physics.knock(mesh, travel)`**: the body turns DYNAMIC and
+  is shoved towards the nearest board edge, bent a little along the capturer's
+  line of travel (`travelWeight`), with `knockSpeed` sideways, `knockLift` up
+  (enough to arc over standing pieces) and `knockSpin` end over end. From then on `step()` copies the body's position
+  and rotation onto the mesh each frame. `allowSleep` puts it to rest; if it
+  dozes off while still on the board it gets one more shove.
+* **Impacts make sound**: `body.addEventListener('collide')` reports the impact
+  speed, `sound.hit(speed / 8)` plays the click at that volume.
+* **Settings, Debug, show colliders** draws every body as a wireframe. Turn it
+  on and capture something: you will see exactly what the simulation sees.
 
-```js
-import * as CANNON from 'cannon-es'
+Knobs, all in `config.js` under `PHYSICS`: gravity, friction, restitution,
+the three knock values. Turn physics off (Settings, Game) and captures glide to
+a graveyard beside the board instead, the pre-physics behaviour.
 
-// 1. A body with a simple shape. Never use the mesh itself as the shape:
-//    the king has 535,000 vertices. A cylinder is plenty.
-const box = piece.geometry.boundingBox
-const radius = (box.max.x - box.min.x) / 2
-const height = box.max.y - box.min.y
-const body = new CANNON.Body({
-  mass: 1,
-  shape: new CANNON.Cylinder(radius, radius, height, 12),
-  position: new CANNON.Vec3(piece.position.x, height / 2 + 2, piece.position.z)
-})
+Next steps if you want more:
 
-// 2. Cylinder shapes are centred, meshes have their base at y = 0.
-//    Shift the shape down so the two line up.
-body.shapes[0] = body.shapes[0]
-body.shapeOffsets[0].set(0, -height / 2, 0)  // or move the geometry instead, once, in pieces.js
-
-// 3. Link. From now on the mesh follows the body every frame.
-physics.link(piece, body)
-```
-
-Things you will hit, in order:
-
-1. **Drag versus physics fight.** While a piece is dragged, the body must follow
-   the mesh (set `body.position` from `object.position` in the `drag` handler
-   and zero its velocity), then on `dragend` the body takes over again.
-2. **Board edges.** The ground plane is infinite. Add a `CANNON.Box` for the
-   plate, or let pieces fall off the world for fun.
-3. **Sound.** `world.addEventListener('collide', ...)` on a body gives you the
-   impact; play a click scaled by the impact velocity. There used to be a
-   `hit.mp3` in the old `static/` folder (see git history) if you want it back.
-4. **Sleep.** `allowSleep` is on, so resting pieces stop simulating. If a piece
-   freezes mid-air, wake it with `body.wakeUp()`.
-
-Alternative engine: Rapier (`@dimforge/rapier3d-compat`) is faster and more
-accurate but WASM based and a bigger API. cannon-es is the gentler first step.
+1. **Dragged piece as a kinematic body** so a carried piece pushes others aside
+   (`body.type = KINEMATIC`, set its position from the mesh each frame).
+2. **Compound shapes** (a fat base cylinder plus a thin top) for more honest
+   tumbling than one tapered cylinder.
+3. **Rapier** (`@dimforge/rapier3d-compat`) if you ever need hundreds of bodies;
+   faster and more stable, WASM based, bigger API.
 
 ## 7. Making it more visually interesting
 
 Ranked by payoff for effort. Each one lives in one file.
 
-1. **Hover and selection feedback** (`controls/drag.js`). On `hoveron`, lift the
-   piece 0.15 with a GSAP tween and swap to a brighter matcap or add an outline
-   pass. On `dragend`, animate the snap instead of teleporting.
+1. **Selection feedback** (`chess/controller.js`, `onHover`). The lift is in;
+   next: a brighter matcap or an outline pass on the hovered piece.
 2. **Real lighting** (`scene/materials.js`). Swap `MeshMatcapMaterial` for
    `MeshStandardMaterial` plus an environment map from `RoomEnvironment`, turn
    on shadows. The palette panel would then pick colours instead of matcaps.
-3. **Camera choreography** (`controls/cameras.js`). Intro flythrough with GSAP
-   on `camera.position` while the overlay fades; a "look at the piece I am
-   holding" nudge during drag.
-4. **Captures with physics** (`chess/controller.js`, `capture()`). Today a
-   captured piece glides to the graveyard with GSAP. Replace that with a
-   physics body and a shove from the capturer. This is where physics pays for itself.
+3. **Camera choreography** (`controls/cameras.js`, `flyTo`). The camera already
+   glides behind the player to move. Next: an intro flythrough while the overlay
+   fades, and a gentle "look at the piece I am holding" nudge during a drag.
+4. **Captures** (`chess/controller.js`, `capture()`). Done with physics. Next:
+   a little dust puff or a flash on impact (`scene/effects.js`, particles).
 5. **Post-processing** (`core/renderer.js`). Add `OutputPass` at the end of the
    chain for correct colour, then try `SMAAPass` for anti-aliasing, a subtle
-   vignette, depth of field for the showcase views.
+   vignette, depth of field for the gallery.
 
 ## 7b. Tests
 

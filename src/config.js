@@ -45,7 +45,7 @@ export const MATERIAL_SLOTS = {
   darkSquares: 'Dark squares',
   plate: 'Plate',
   sky: 'Sky',
-  display: 'Showcase'
+  display: 'Gallery piece'
 }
 
 // Curated combinations. The first one is the default look.
@@ -69,7 +69,12 @@ export const CAMERA = {
   fov: 55,
   near: 0.1,
   far: 100,
-  position: { x: 9, y: 5, z: 9 }
+  position: { x: 9, y: 5, z: 9 },        // opening view, from the corner
+  sides: {                                // "behind the player" views, used when the camera follows the turn
+    light: { x: 0, y: 6.5, z: -11 },
+    dark: { x: 0, y: 6.5, z: 11 }
+  },
+  flySeconds: 1.4
 }
 
 export const POST_FX = {
@@ -78,17 +83,23 @@ export const POST_FX = {
   dotScreenEnabled: false
 }
 
-// Camera views 2 to 5 sit at the centre of a small sphere and each looks at
-// one slowly spinning piece. `y` nudges the piece so it is vertically centred.
-export const SHOWCASE = {
-  sphereRadius: WORLD_RADIUS / 3,
-  spinSeconds: 3.5,
-  pieces: [
-    { key: '2', type: 'bishop', position: { x: 0, y: -0.75, z: -2.5 } },
-    { key: '3', type: 'queen', position: { x: 0, y: -0.8, z: 2.5 } },
-    { key: '4', type: 'rook', position: { x: 2.5, y: -0.5, z: 0 } },
-    { key: '5', type: 'knight', position: { x: -2.5, y: -0.5, z: 0 } }
-  ]
+// The gallery (key G): one piece at a time on a turntable, orbit it yourself.
+export const GALLERY = {
+  sphereRadius: 12,
+  fov: 40,
+  autoRotateSpeed: 1.2,
+  order: ['pawn', 'rook', 'knight', 'bishop', 'queen', 'king'],
+  first: 'queen'
+}
+
+// Caption text for the gallery. Edit freely.
+export const PIECE_INFO = {
+  pawn: { name: 'Pawn', line: 'The foot soldier. Eight per side, one square forward, captures diagonally.' },
+  rook: { name: 'Rook', line: 'Straight lines, any distance. Castles with the king.' },
+  knight: { name: 'Knight', line: 'The only piece that jumps: two squares one way, one across.' },
+  bishop: { name: 'Bishop', line: 'Diagonals only, so it never leaves the colour it started on.' },
+  queen: { name: 'Queen', line: 'Rook and bishop in one. The most powerful piece on the board.' },
+  king: { name: 'King', line: 'One square in any direction. Lose it and the game is over.' }
 }
 
 export const LOADING = {
@@ -112,4 +123,20 @@ export const HIGHLIGHT = {
   move: 0xffffff,
   capture: 0xff7a45,
   origin: 0xcac0e5
+}
+
+export const PHYSICS = {
+  gravity: -9.82,
+  friction: 0.4,
+  restitution: 0.25,
+  topRadiusRatio: 0.55,  // a piece's collider is a tapered cylinder: narrower at the top
+  knockSpeed: 5,         // horizontal speed given to a captured piece
+  knockLift: 6.5,        // upward speed: high enough to arc over standing pieces
+  knockSpin: 6,          // tumble
+  travelWeight: 0.6      // how much the capturer's line of travel bends the shove (0 = straight to the nearest edge)
+}
+
+export const HOVER = {
+  lift: 0.12,
+  seconds: 0.25
 }

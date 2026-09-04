@@ -23,9 +23,10 @@ Node 22 and npm. Vite is the only build tool.
 * Left drag rotates, scroll zooms, right drag pans.
 * Click and drag a piece to move it. Legal squares light up, illegal drops bounce back, captures slide off to the side.
 * Only the side to move can be picked up. N starts a new game.
-* Keys 1 to 5 switch camera views (1 is the board, 2 to 5 are single pieces).
+* Captured pieces get knocked off the board (cannon-es physics). The camera glides behind the player to move.
+* G opens the gallery: each piece on a turntable, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
-* ? shows the controls, H hides the settings panel, double click for fullscreen.
+* ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
 
 ## Code layout
 
@@ -35,10 +36,10 @@ src/main.js           wires everything together, start reading here
 src/config.js         every tunable number and asset path
 src/chess/            coordinates, rules (chess.js), controller that moves the meshes
 src/core/             sizes, loading screen, renderer + post-processing
-src/scene/            materials, board, environment, pieces, showcase scene
+src/scene/            materials, board, environment, pieces, highlights, gallery scene
 src/controls/         camera, drag and drop, view switching
-src/physics/          cannon-es world (extension point, empty so far)
-src/ui/               status line, colour panel, help panel
+src/physics/          cannon-es world (pieces, board, floor, knock) + collider wireframes
+src/ui/               status line, colour panel, help panel, gallery bar
 src/debug/            settings panel
 tests/                Vitest unit tests
 public/               static assets served at / (decimated .glb pieces, matcaps, icons)
@@ -53,7 +54,7 @@ Three.js, chess.js, GSAP, lil-gui, cannon-es, Vite, Vitest.
 
 ## Roadmap
 
-* Physics: pieces with mass, captures that knock pieces off the board.
-* Visual polish: hover feedback, real lighting and shadows, camera choreography.
+* Visual polish: real lighting and shadows, particles on capture, intro flythrough.
+* A computer opponent (rules based, three levels).
 * Chess rules: done (chess.js). Still to do: choose the promotion piece, undo, clocks.
 * Multiplayer, one day.
