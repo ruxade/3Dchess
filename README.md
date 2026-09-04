@@ -16,7 +16,8 @@ npm run preview   # serve the production build locally
 npm test          # unit tests for the square maths and the rules wrapper
 ```
 
-Node 22 and npm. Vite is the only build tool. `.npmrc` sets `legacy-peer-deps`
+Node 22 and npm (`.nvmrc` says so, `netlify.toml` pins it for the Netlify
+build). Vite is the only build tool. `.npmrc` sets `legacy-peer-deps`
 because three-pinata declares an older Three.js range than the one in use; it
 works fine with the current one.
 

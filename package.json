@@ -4,6 +4,9 @@
   "version": "0.2.0",
   "type": "module",
   "description": "Interactive 3D chess set built with Three.js (personal learning project)",
+  "engines": {
+    "node": ">=22.12"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

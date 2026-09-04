@@ -1,0 +1,8 @@
+# Netlify builds the site from this file, not from the dashboard settings.
+# Vite 8 needs Node 20.19 or 22.12 and up; Netlify's default image is older.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
