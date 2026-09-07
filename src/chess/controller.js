@@ -11,7 +11,7 @@
 
 import * as THREE from 'three'
 import { gsap } from 'gsap'
-import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, CAPTURE_STYLES, GAME_STORAGE_KEY } from '../config.js'
+import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, CAPTURE_STYLES, SHATTER, GAME_STORAGE_KEY } from '../config.js'
 import { nameToSquare, squareName, squareToWorld } from './coords.js'
 import { createClock } from './clock.js'
 import { createPieceSet } from '../scene/pieces.js'
@@ -25,6 +25,7 @@ export function applySavedSettings(settings) {
   if (saved.humanColour === 'light' || saved.humanColour === 'dark') settings.humanColour = saved.humanColour
   if (saved.clock in CLOCK.presets) settings.clock = saved.clock
   if (CAPTURE_STYLES.includes(saved.captures)) settings.captures = saved.captures
+  if (saved.shatterSound in SHATTER.sounds) settings.shatterSound = saved.shatterSound
 }
 
 export function createGameController({
@@ -432,7 +433,7 @@ export function createGameController({
   function persist() {
     saveJson(GAME_STORAGE_KEY, {
       pgn: rules.pgn(),
-      settings: { opponent: settings.opponent, humanColour: settings.humanColour, clock: settings.clock, captures: settings.captures },
+      settings: { opponent: settings.opponent, humanColour: settings.humanColour, clock: settings.clock, captures: settings.captures, shatterSound: settings.shatterSound },
       clock: clock ? { light: clock.remaining('light'), dark: clock.remaining('dark') } : null,
       fallen: pieces.children.filter((p) => p.userData.captured).map((p) => ({
         type: p.userData.type, colour: p.userData.colour, shattered: !!p.userData.shattered,
@@ -476,5 +477,11 @@ export function createGameController({
   camera.flyToSide(computerOn() ? settings.humanColour : 'light', CAMERA.introSeconds)   // the intro flight
   if (computerOn() && rules.turn() === computerColour() && !gameOver()) computerMove()
 
-  return { onPickUp, onCarry, onDrop, onHover, undo, reset, load, onOpponentChange, onClockChange, tick, syncFromRules }
+  /** Settings panel picked another shatter sound: play it once so you can hear it, and remember it. */
+  function onSoundChange() {
+    sound.crack(settings.knockStrength)
+    persist()
+  }
+
+  return { onPickUp, onCarry, onDrop, onHover, undo, reset, load, onOpponentChange, onClockChange, onSoundChange, tick, syncFromRules }
 }

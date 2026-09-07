@@ -43,7 +43,7 @@ and the job is in the first comment of the file.
 | `src/controls/views.js` | Game, gallery and victory modes, key H. | Add a mode |
 | `src/physics/world.js` | cannon-es world: static pieces, board, floor, knock(). | Tune how pieces fly |
 | `src/physics/debug.js` | Wireframe colliders (Settings, Debug, show colliders). | Nothing usually |
-| `src/core/sound.js` | The click sample, volume by impact. | Add sounds |
+| `src/core/sound.js` | The click sample by impact, the shatter recordings. | Add sounds |
 | `src/debug/gui.js` | The Settings panel (lil-gui). | Expose a new slider |
 
 `public/` is served at the site root, so `/models/set/glb/king.glb` on disk is
@@ -295,12 +295,13 @@ runs Blender headless and writes the game-resolution .glb files:
 | king | 178,322 | 14,000 | 2 |
 | queen | 152,558 | 14,000 | 2 |
 | bishop | 54,300 | 9,000 | 4 |
-| pawn | 29,248 | 6,000 | 16 |
+| pawn | 29,248 | 29,248 (kept whole, her call: the edges go first) | 16 |
 | knight | 12,344 | 12,344 (kept whole: its face goes first under any budget) | 4 |
 | rook | 4,296 | 4,296 | 4 |
 
-Per frame: about 1.4 million triangles before, 245 thousand after. Download:
-15 MB before, 1.6 MB after. To change the budgets edit `TRIANGLE_BUDGET` in the
+Per frame: about 1.4 million triangles before, 620 thousand after (the sixteen
+whole pawns are 470 thousand of those). Download: 15 MB before, 2.4 MB after.
+To change the budgets edit `TRIANGLE_BUDGET` in the
 script (`None` keeps every triangle) and run:
 
 ```bash

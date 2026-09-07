@@ -22,8 +22,8 @@ src_dir, out_dir = argv[0], argv[1]
 only = argv[2].split(',') if len(argv) > 2 else None
 os.makedirs(out_dir, exist_ok=True)
 
-# None keeps every triangle of the source (the knight loses its face under any budget).
-TRIANGLE_BUDGET = {'pawn': 6000, 'rook': 5000, 'knight': None, 'bishop': 9000, 'queen': 14000, 'king': 14000}
+# None keeps every triangle of the source (the knight loses its face under any budget, the pawn its edges).
+TRIANGLE_BUDGET = {'pawn': None, 'rook': 5000, 'knight': None, 'bishop': 9000, 'queen': 14000, 'king': 14000}
 PAWN_WORLD_HEIGHT = 1.19   # measured in the game with FBX at scale 0.02
 
 def bbox(me):

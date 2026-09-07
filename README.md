@@ -32,7 +32,7 @@ works fine with the current one.
 * The game is saved after every move. Close the tab, come back, carry on.
 * A pawn on the last rank asks what it becomes.
 * Checkmate or a flag brings up the victory screen: the winner's pawn on a turntable. New game, or back to the board to look at the position.
-* Settings, Game, "knock strength" tames or unleashes the captures.
+* Settings, Game, "knock strength" tames or unleashes the captures; "shatter sound" picks the break (it plays once when you change it).
 * G opens the gallery: each piece on a turntable, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
 * ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
@@ -60,6 +60,20 @@ docs/ARCHITECTURE.md  the walkthrough: how a frame works, how to add physics, id
 ## Stack
 
 Three.js, chess.js, GSAP, lil-gui, cannon-es, three-pinata (runtime mesh fracture), Vite, Vitest.
+
+## Credits
+
+Shatter sounds are CC0 recordings from freesound.org, trimmed and normalised:
+
+* destroy: "Rock destroy" by Bertsz, https://freesound.org/s/524312/
+* smash: "Concrete SMASH 2" by magnuswaker, https://freesound.org/s/522099/
+* crack: "rock1_break_140bpm" by Bsantos, https://freesound.org/s/41284/
+* crumble: "Kirkstall Rock Crumble" by rokenjocu, https://freesound.org/s/262118/
+* stone: "stone falls and breaks low pitch" by SoundCollectah, https://freesound.org/s/109360/
+
+The chess set is my own design. Code libraries: Three.js (MIT), chess.js
+(BSD-2), GSAP (standard no-charge licence), lil-gui, cannon-es, three-pinata
+(MIT). The pointer icons are from Icons8 (free with attribution).
 
 ## Roadmap
 

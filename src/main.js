@@ -34,11 +34,11 @@ import { createMovesUi } from './ui/moves.js'
 import { createPromotionUi } from './ui/promotion.js'
 import { createClocksUi } from './ui/clocks.js'
 import { createVictoryUi } from './ui/victory.js'
-import { PHYSICS, CAPTURE_STYLES } from './config.js'
+import { PHYSICS, SHATTER } from './config.js'
 
 // Things the user can toggle at runtime (Settings panel). Modules read these live.
 const settings = {
-  dragging: true, captures: 'shatter', knockStrength: PHYSICS.knockStrength, sound: true, followTurn: true, showColliders: false,
+  dragging: true, captures: 'shatter', knockStrength: PHYSICS.knockStrength, shatterSound: SHATTER.defaultSound, sound: true, followTurn: true, showColliders: false,
   opponent: 'off', humanColour: 'light', clock: 'off'
 }
 applySavedSettings(settings)   // opponent, colour and clock come back with the saved game
@@ -116,6 +116,7 @@ loadPieceGeometries(loading.manager)
     hooks.onOpponentChange = game.onOpponentChange
     hooks.onColourChange = game.reset
     hooks.onClockChange = game.onClockChange
+    hooks.onSoundChange = game.onSoundChange
     hooks.tick = game.tick
     // Poke at the game from the browser console: chess.rules.fen(), chess.game.reset(), ...
     window.chess = { rules, pieces, camera: mainCamera.camera, rig: mainCamera, game, dragControls, physics, physicsDebug, shatter, materials, settings, views, gui, passes }

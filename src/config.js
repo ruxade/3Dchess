@@ -159,7 +159,17 @@ export const SHATTER = {
   lift: 3.0,            // upward speed
   spin: 10,             // radians per second, at strength 1
   lifeSeconds: 6,       // debris lies around this long
-  fadeSeconds: 0.6      // then shrinks away
+  fadeSeconds: 0.6,     // then shrinks away
+  // Recordings for the break, all CC0 from freesound.org (credits in the README).
+  // Settings, Game, "shatter sound" picks one.
+  sounds: {
+    destroy: '/sounds/shatter-destroy.mp3',
+    smash: '/sounds/shatter-smash.mp3',
+    crack: '/sounds/shatter-crack.mp3',
+    crumble: '/sounds/shatter-crumble.mp3',
+    stone: '/sounds/shatter-stone.mp3'
+  },
+  defaultSound: 'destroy'
 }
 
 export const CAPTURE_STYLES = ['knock', 'shatter', 'glide']
