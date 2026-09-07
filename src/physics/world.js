@@ -33,6 +33,7 @@ export function createPhysics() {
 
   const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength, centred }
   const impactListeners = new Set()
+  const restListeners = new Set()    // a knocked piece has come to rest off the board
   const up = new THREE.Vector3(0, 1, 0)
   const scratch = new THREE.Vector3()
 
@@ -61,6 +62,8 @@ export function createPhysics() {
         body.wakeUp()
         const away = scratch.set(body.position.x, 0, body.position.z).normalize()
         shove(body, away, Math.max(0.7, entry.strength))   // a gentle knock still has to get it off the board
+      } else {
+        restListeners.forEach((fn) => fn(mesh))
       }
     })
   }
@@ -119,11 +122,12 @@ export function createPhysics() {
     entry.body.position.y = -50
   }
 
-  /** Move a STATIC body to wherever its mesh now stands (after a move animation). */
+  /** Move a STATIC body to wherever its mesh now is (after a move animation, or laid on its side by a restore). */
   function follow(mesh) {
     const entry = entries.get(mesh)
     if (!entry || entry.dynamic) return
-    entry.body.position.set(mesh.position.x, mesh.position.y + entry.halfHeight, mesh.position.z)
+    scratch.set(0, entry.halfHeight, 0).applyQuaternion(mesh.quaternion)   // mesh origin is the base, body origin the centre
+    entry.body.position.set(mesh.position.x + scratch.x, mesh.position.y + scratch.y, mesh.position.z + scratch.z)
     entry.body.quaternion.copy(mesh.quaternion)
   }
 
@@ -205,5 +209,11 @@ export function createPhysics() {
     return () => impactListeners.delete(fn)
   }
 
-  return { world, entries, addPiece, addFragment, park, follow, knock, restore, reshape, remove, clear, step, onImpact }
+  /** fn(mesh) when a knocked piece settles off the board. */
+  function onRest(fn) {
+    restListeners.add(fn)
+    return () => restListeners.delete(fn)
+  }
+
+  return { world, entries, addPiece, addFragment, park, follow, knock, restore, reshape, remove, clear, step, onImpact, onRest }
 }

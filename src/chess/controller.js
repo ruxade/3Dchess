@@ -223,19 +223,49 @@ export function createGameController({
       }
       const shattered = style === 'shatter' && shatter.shatter(piece, travel, settings.knockStrength)
       if (!shattered) physics.knock(piece, travel, settings.knockStrength)
+      else sound.crack(settings.knockStrength)
       effects.burst(new THREE.Vector3(piece.position.x, 0.6, piece.position.z), shattered ? EFFECTS.burstCount * 1.5 : EFFECTS.burstCount)
       return
     }
 
+    toGraveyard(piece, false)
+  }
+
+  /** The next free slot in the columns beside the board. `instant` skips the glide. */
+  function toGraveyard(piece, instant) {
     const colour = piece.userData.colour
     const n = captured[colour]++
     const side = colour === 'light' ? 1 : -1
     const x = side * (GRAVEYARD.firstColumnX + Math.floor(n / GRAVEYARD.perColumn) * GRAVEYARD.columnGap)
     const z = (n % GRAVEYARD.perColumn) - GRAVEYARD.perColumn / 2 + 0.5
+    if (instant) {
+      piece.position.set(x, 0, z)
+      physics.follow(piece)
+      return
+    }
     gsap.timeline({ onComplete: () => physics.follow(piece) })
       .to(piece.position, { y: DRAG.liftHeight * 0.4, duration: 0.2, ease: 'power2.out' })
       .to(piece.position, { x, z, duration: 0.6, ease: 'power2.inOut' }, '<0.05')
       .to(piece.position, { y: 0, duration: 0.25, ease: 'bounce.out' })
+  }
+
+  /**
+   * A restored game: put a captured piece back where it was lying (the saved
+   * pose), hide it if it had shattered, or park it beside the board if there
+   * is no usable pose (it was still in the air when the page closed).
+   */
+  function restFallen(piece, poses) {
+    piece.userData.captured = true
+    piece.userData.col = -1
+    piece.userData.row = -1
+    const i = poses.findIndex((p) => p.type === piece.userData.type && p.colour === piece.userData.colour)
+    const pose = i >= 0 ? poses.splice(i, 1)[0] : null
+    if (pose?.shattered) { shatter.vanish(piece); return }
+    const settled = pose && pose.position[1] < 0 && Math.hypot(pose.position[0], pose.position[2]) > 4.2
+    if (!settled) { toGraveyard(piece, true); return }
+    piece.position.fromArray(pose.position)
+    piece.quaternion.fromArray(pose.quaternion)
+    physics.follow(piece)
   }
 
   /** A captured piece comes back (undo): whole, upright, static again. */
@@ -259,9 +289,10 @@ export function createGameController({
    * Make the meshes match the rules, whatever happened. Used by undo and by
    * loading a position. Pieces already in the right place stay put; the rest
    * fly to where they belong, come back from the plate, or get knocked off.
-   * `instant` skips the flight (restoring a saved game at start-up).
+   * `instant` skips the flight (restoring a saved game at start-up); `fallen`
+   * is then the saved list of where the captured pieces were lying.
    */
-  function syncFromRules(instant = false) {
+  function syncFromRules(instant = false, fallen = null) {
     const wanted = rules.pieces()
     const free = new Set(pieces.children)
     const todo = []
@@ -290,8 +321,13 @@ export function createGameController({
         flyTo(m, w.square, 0.7)
       }
     }
-    // Pieces that simply should not be there (a loaded position) are knocked, not shattered: nothing captured them.
-    for (const m of free) if (!m.userData.captured) capture(m, null, null, settings.captures === 'shatter' ? 'knock' : settings.captures)
+    // Pieces that simply should not be there: back where they were lying (a restored
+    // game), or knocked, not shattered, for a loaded position (nothing captured them).
+    for (const m of free) {
+      if (m.userData.captured) continue
+      if (fallen) restFallen(m, fallen)
+      else capture(m, null, null, settings.captures === 'shatter' ? 'knock' : settings.captures)
+    }
 
     index()
     refresh()
@@ -397,15 +433,19 @@ export function createGameController({
     saveJson(GAME_STORAGE_KEY, {
       pgn: rules.pgn(),
       settings: { opponent: settings.opponent, humanColour: settings.humanColour, clock: settings.clock, captures: settings.captures },
-      clock: clock ? { light: clock.remaining('light'), dark: clock.remaining('dark') } : null
+      clock: clock ? { light: clock.remaining('light'), dark: clock.remaining('dark') } : null,
+      fallen: pieces.children.filter((p) => p.userData.captured).map((p) => ({
+        type: p.userData.type, colour: p.userData.colour, shattered: !!p.userData.shattered,
+        position: p.position.toArray(), quaternion: p.quaternion.toArray()
+      }))
     })
   }
 
-  /** Bring back the saved game, pieces straight onto their squares. Returns true if there was one. */
+  /** Bring back the saved game: pieces straight onto their squares, captured ones where they fell. Returns true if there was one. */
   function restoreSaved() {
     const saved = loadJson(GAME_STORAGE_KEY)
     if (!saved?.pgn || !rules.loadPgn(saved.pgn)) return false
-    syncFromRules(true)
+    syncFromRules(true, Array.isArray(saved.fallen) ? [...saved.fallen] : [])
     if (clock && saved.clock) clock.setRemaining(saved.clock)   // it waits for the next move to run
     return true
   }
@@ -421,6 +461,9 @@ export function createGameController({
       effects.burst(mesh.position.clone().setY(Math.max(mesh.position.y, -0.9)), 14)
     }
   })
+
+  physics.onRest(() => persist())                         // a knocked piece settled: remember where
+  window.addEventListener('pagehide', () => persist())    // and whatever the state is when the tab goes
 
   window.addEventListener('keydown', (event) => {
     if (event.key === 'n' || event.key === 'N') reset()

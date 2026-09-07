@@ -71,6 +71,19 @@ describe('physics', () => {
     expect(Math.hypot(victim.position.x, victim.position.z)).toBeLessThan(11)
   })
 
+  it('follow() puts the body centre above the base of a piece lying on its side', () => {
+    const physics = createPhysics()
+    const pawn = piece(6, 1)
+    physics.addPiece(pawn)
+    pawn.rotation.z = Math.PI / 2          // lying along -x, base at the mesh origin
+    physics.follow(pawn)
+    const { body, halfHeight } = physics.entries.get(pawn)
+    expect(body.position.x).toBeCloseTo(6 - halfHeight, 5)
+    expect(body.position.y).toBeCloseTo(0, 5)
+    simulate(physics, 1)
+    expect(pawn.position.toArray()).toEqual([6, 0, 1])   // static: it stays put
+  })
+
   it('follow() moves a static body with its mesh', () => {
     const physics = createPhysics()
     const knight = piece(0, 0)

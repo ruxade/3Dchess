@@ -77,9 +77,7 @@ export function createShatter({ scene, physics }) {
   function shatter(piece, travel, strength) {
     const shards = prepare(piece.userData.type)
     if (!shards?.length) return false
-    piece.visible = false
-    piece.userData.shattered = true
-    physics.park(piece)                     // its standing body would get in the shards' way
+    vanish(piece)
 
     const inside = insideFor(piece.material)
     const radial = new THREE.Vector3()
@@ -102,6 +100,13 @@ export function createShatter({ scene, physics }) {
       live.push({ mesh, piece, age: 0 })
     }
     return true
+  }
+
+  /** The piece is gone (shattered), no shards: hidden, its body parked out of the way. Used by shatter() and by a restored game. */
+  function vanish(piece) {
+    piece.visible = false
+    piece.userData.shattered = true
+    physics.park(piece)
   }
 
   function drop(debris) {
@@ -137,5 +142,5 @@ export function createShatter({ scene, physics }) {
     live.length = 0
   }
 
-  return { setGeometries, prepare, warmUp, shatter, update, restore, clear, debris: group, isReady: (type) => cuts.has(type) }
+  return { setGeometries, prepare, warmUp, shatter, vanish, update, restore, clear, debris: group, isReady: (type) => cuts.has(type) }
 }
