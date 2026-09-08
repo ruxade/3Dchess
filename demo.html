@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Chess</title>
+  <title>3D Chess demo</title>
   <link rel="icon" href="/knight.png">
 </head>
 <body>
@@ -46,6 +46,8 @@
   <button class="fab fab-palette" aria-label="Colours" title="Colours (P)"><span class="swatch-icon"></span></button>
   <aside class="palette panel" hidden></aside>
 
+  <!-- /demo: the self-playing demo, looping, for a screen or a hand-over -->
+  <script>window.CHESS_DEMO = { game: "legal", loop: true }</script>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

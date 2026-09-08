@@ -36,6 +36,7 @@ works fine with the current one.
 * G opens the gallery: each piece on a turntable, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
 * ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
+* `/demo` is the self-playing demo: a cursor drags the pieces through Legal's mate, queen sacrifice and all, and loops. Any click or key takes the board back. On the game page, D starts the same demo once; `?demo=opera` plays Morphy's Opera Game.
 
 ## Code layout
 
@@ -50,6 +51,7 @@ src/controls/         camera, drag and drop, view switching
 src/physics/          cannon-es world (pieces, board, floor, knock) + collider wireframes
 src/ui/               status line, colour panel, help panel, gallery bar, move list, promotion chooser, clocks
 src/debug/            settings panel
+src/demo/             the self-playing demo (drawn cursor, scripted famous games)
 tests/                Vitest unit tests
 public/               static assets served at / (decimated .glb pieces, matcaps, icons)
 design/               sources that are not shipped (original FBX models, icon PSD)

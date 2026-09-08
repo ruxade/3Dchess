@@ -202,6 +202,49 @@ body.ready .pill {
   opacity: 1;
 }
 
+/* ---- the demo's drawn cursor ---- */
+
+.demo-cursor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 40;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.demo-cursor svg {
+  display: block;
+  margin: -3px 0 0 -5px;      /* the arrow's tip sits on the point */
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.45));
+  transition: transform 0.12s ease;
+  transform-origin: 5px 3px;
+}
+
+.demo-cursor.down svg {
+  transform: scale(0.82);
+}
+
+.demo-cursor .ring {
+  position: absolute;
+  top: -14px;
+  left: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  opacity: 0;
+}
+
+.demo-cursor .ring.pulse {
+  animation: demo-pulse 0.5s ease-out;
+}
+
+@keyframes demo-pulse {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to { transform: scale(1.6); opacity: 0; }
+}
+
 .pill:hover {
   background: var(--glass-strong);
 }
@@ -794,6 +837,7 @@ body[data-mode="victory"] .clocks {
     padding: 6px 12px;
     font-size: 0.8rem;
   }
+
 
   .gallery-bar {
     bottom: 12px;

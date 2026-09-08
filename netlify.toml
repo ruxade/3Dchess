@@ -6,3 +6,9 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# /demo is the self-playing demo page (demo.html), same app, looping.
+[[redirects]]
+  from = "/demo"
+  to = "/demo.html"
+  status = 200

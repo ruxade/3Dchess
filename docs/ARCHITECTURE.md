@@ -45,6 +45,7 @@ and the job is in the first comment of the file.
 | `src/physics/debug.js` | Wireframe colliders (Settings, Debug, show colliders). | Nothing usually |
 | `src/core/sound.js` | The click sample by impact, the shatter recordings. | Add sounds |
 | `src/debug/gui.js` | The Settings panel (lil-gui). | Expose a new slider |
+| `src/demo/demo.js` | Self-playing demo: drawn cursor, scripted games, key D and ?demo. | Add a game (config DEMO) |
 
 `public/` is served at the site root, so `/models/set/glb/king.glb` on disk is
 `public/models/set/glb/king.glb`. `design/` holds the sources that are not

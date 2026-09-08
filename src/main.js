@@ -17,6 +17,7 @@ import { createEffects } from './scene/effects.js'
 import { createGallery } from './scene/gallery.js'
 import { createVictory } from './scene/victory.js'
 import { createShatter } from './scene/shatter.js'
+import { createDemo } from './demo/demo.js'
 import { createMainCamera } from './controls/cameras.js'
 import { createDragControls } from './controls/drag.js'
 import { createViews } from './controls/views.js'
@@ -117,9 +118,10 @@ loadPieceGeometries(loading.manager)
     hooks.onColourChange = game.reset
     hooks.onClockChange = game.onClockChange
     hooks.onSoundChange = game.onSoundChange
+    const demo = createDemo({ pieces, camera: mainCamera.camera, canvas, sizes, game, dragControls, settings })   // /demo, key D, ?demo=legal
     hooks.tick = game.tick
     // Poke at the game from the browser console: chess.rules.fen(), chess.game.reset(), ...
-    window.chess = { rules, pieces, camera: mainCamera.camera, rig: mainCamera, game, dragControls, physics, physicsDebug, shatter, materials, settings, views, gui, passes }
+    window.chess = { rules, pieces, camera: mainCamera.camera, rig: mainCamera, game, demo, dragControls, physics, physicsDebug, shatter, materials, settings, views, gui, passes }
   })
   .catch((error) => console.error('Could not load the chess set:', error))
 
