@@ -11,6 +11,7 @@ export function createGalleryUi({ gallery, views }) {
     <div class="gallery-caption">
       <h2 class="gallery-name"></h2>
       <p class="gallery-line"></p>
+      <p class="gallery-history"></p>
       <p class="gallery-stats"></p>
     </div>
     <div class="gallery-nav">
@@ -22,12 +23,14 @@ export function createGalleryUi({ gallery, views }) {
 
   const name = bar.querySelector('.gallery-name')
   const line = bar.querySelector('.gallery-line')
+  const history = bar.querySelector('.gallery-history')
   const stats = bar.querySelector('.gallery-stats')
 
   function render(facts) {
     const type = gallery.current()
     name.textContent = PIECE_INFO[type].name
     line.textContent = PIECE_INFO[type].line
+    history.textContent = PIECE_INFO[type].history
     stats.textContent = facts
       ? `${facts.height.toFixed(2)} squares tall, ${Math.round(facts.triangles).toLocaleString()} triangles`
       : ''

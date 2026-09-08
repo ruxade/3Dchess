@@ -292,8 +292,16 @@ body[data-mode="gallery"] .gallery-bar {
   font-size: 0.95rem;
 }
 
+.gallery-history {
+  margin: 8px auto 0;
+  max-width: 560px;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
 .gallery-stats {
-  margin-top: 4px;
+  margin-top: 6px;
   font-size: 0.75rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -846,6 +854,7 @@ body[data-mode="victory"] .clocks {
 
   .gallery-name { font-size: 1.2rem; }
   .gallery-line { font-size: 0.85rem; }
+  .gallery-history { font-size: 0.78rem; }
   .back { margin-left: 0; }
 
   .promotion {

@@ -83,7 +83,7 @@ const views = createViews({ game: mainCamera, gallery, victory, dragControls, gu
 const galleryUi = createGalleryUi({ gallery, views })
 const victoryUi = createVictoryUi({ victory, views, onNew: () => hooks.reset?.() })
 const status = createStatus()                               // "White to move" line
-createPalette(materials)                                    // colour panel, key P
+const paletteUi = createPalette(materials)                  // colour panel, key P
 createHelp()                                                // help panel, key ?
 const promotionUi = createPromotionUi()                     // queen, rook, bishop or knight
 const movesUi = createMovesUi({ onUndo: () => hooks.undo?.(), onNew: () => hooks.reset?.() })
@@ -118,7 +118,7 @@ loadPieceGeometries(loading.manager)
     hooks.onColourChange = game.reset
     hooks.onClockChange = game.onClockChange
     hooks.onSoundChange = game.onSoundChange
-    const demo = createDemo({ pieces, camera: mainCamera.camera, canvas, sizes, game, dragControls, settings })   // /demo, key D, ?demo=legal
+    const demo = createDemo({ pieces, camera: mainCamera.camera, canvas, sizes, game, dragControls, settings, materials, palette: paletteUi })   // /demo, key D, ?demo=legal
     hooks.tick = game.tick
     // Poke at the game from the browser console: chess.rules.fen(), chess.game.reset(), ...
     window.chess = { rules, pieces, camera: mainCamera.camera, rig: mainCamera, game, demo, dragControls, physics, physicsDebug, shatter, materials, settings, views, gui, passes }

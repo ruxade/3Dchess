@@ -74,6 +74,13 @@ export function createPalette(materials) {
     if (event.key === 'p' || event.key === 'P') toggle()
   })
 
+  /** Set a whole palette from outside (the demo puts your colours back when it ends). */
+  function apply(next) {
+    palette = materials.applyPalette(next)
+    save(palette)
+    render()
+  }
+
   render()
-  return { toggle }
+  return { toggle, apply }
 }

@@ -33,10 +33,10 @@ works fine with the current one.
 * A pawn on the last rank asks what it becomes.
 * Checkmate or a flag brings up the victory screen: the winner's pawn on a turntable. New game, or back to the board to look at the position.
 * Settings, Game, "knock strength" tames or unleashes the captures; "shatter sound" picks the break (it plays once when you change it).
-* G opens the gallery: each piece on a turntable, orbit it yourself, left and right arrows to browse.
+* G opens the gallery: each piece on a turntable with how it moves and where it came from, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
 * ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
-* `/demo` is the self-playing demo: a cursor drags the pieces through Legal's mate, queen sacrifice and all, and loops. Any click or key takes the board back. On the game page, D starts the same demo once; `?demo=opera` plays Morphy's Opera Game.
+* `/demo` is the self-playing tour, looping: a cursor plays four moves with two captures, opens the gallery and browses two pieces, opens the colour panel and tries two presets and a sky, then plays on. About 45 seconds; your colours come back when it ends. Any click or key takes the board back. On the game page, D starts the tour once; `?demo=legal` plays Legal's mate to checkmate, `?demo=opera` Morphy's Opera Game.
 
 ## Code layout
 
