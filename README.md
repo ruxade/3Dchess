@@ -14,6 +14,7 @@ npm run dev       # opens the browser, hot reloads on save
 npm run build     # production build into dist/
 npm run preview   # serve the production build locally
 npm test          # unit tests for the square maths and the rules wrapper
+npm run deploy    # build and publish to Cloudflare Pages (https://3dchess-5v1.pages.dev)
 ```
 
 Node 22 and npm (`.nvmrc` says so, `netlify.toml` pins it for the Netlify

@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "deploy": "npm run build && npx -y wrangler pages deploy dist --project-name=3dchess"
   },
   "dependencies": {
     "cannon-es": "^0.20.0",
