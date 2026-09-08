@@ -101,14 +101,38 @@ export const VICTORY = {
   camera: { height: 0.95, distance: 2.6 }   // multiples of the pawn's height
 }
 
-// Caption text for the gallery. Edit freely.
+// Caption text for the gallery: how the piece moves, then where it came from. Edit freely.
 export const PIECE_INFO = {
-  pawn: { name: 'Pawn', line: 'The foot soldier. Eight per side, one square forward, captures diagonally.' },
-  rook: { name: 'Rook', line: 'Straight lines, any distance. Castles with the king.' },
-  knight: { name: 'Knight', line: 'The only piece that jumps: two squares one way, one across.' },
-  bishop: { name: 'Bishop', line: 'Diagonals only, so it never leaves the colour it started on.' },
-  queen: { name: 'Queen', line: 'Rook and bishop in one. The most powerful piece on the board.' },
-  king: { name: 'King', line: 'One square in any direction. Lose it and the game is over.' }
+  pawn: {
+    name: 'Pawn',
+    line: 'The foot soldier. Eight per side, one square forward, captures diagonally.',
+    history: 'Began as the padati, the foot soldier of chaturanga in sixth century India. For centuries a pawn reaching the far side became only a counsellor; the queen it turns into today came with the queen’s new powers around 1475.'
+  },
+  rook: {
+    name: 'Rook',
+    line: 'Straight lines, any distance. Castles with the king.',
+    history: 'From the Persian rukh, a chariot. Medieval Italians heard rocca, a fortress, and carved a tower, which is why English also calls it the castle.'
+  },
+  knight: {
+    name: 'Knight',
+    line: 'The only piece that jumps: two squares one way, one across.',
+    history: 'The horse of chaturanga. Its jump is the one move on the board that has not changed in fifteen hundred years.'
+  },
+  bishop: {
+    name: 'Bishop',
+    line: 'Diagonals only, so it never leaves the colour it started on.',
+    history: 'Once the elephant: al-fil in Arabic, alfil in Spanish. It jumped exactly two squares diagonally until Europe gave it the open diagonal around 1475. The French call it the fool, the Germans the runner.'
+  },
+  queen: {
+    name: 'Queen',
+    line: 'Rook and bishop in one. The most powerful piece on the board.',
+    history: 'Started as the vizier, moving one square diagonally, the weakest piece of all. Around 1475 it gained the rook’s and the bishop’s moves at once, and Italians called the new game chess of the mad queen.'
+  },
+  king: {
+    name: 'King',
+    line: 'One square in any direction. Lose it and the game is over.',
+    history: 'Shah in Persian. Checkmate comes from shah mat, the king is helpless. Its single step has never changed; castling was only settled in the seventeenth century.'
+  }
 }
 
 export const LOADING = {
@@ -174,11 +198,30 @@ export const SHATTER = {
 
 export const CAPTURE_STYLES = ['knock', 'shatter', 'glide']
 
-// The self-playing demo (key D, or ?demo=legal in the URL, add &loop to repeat).
-// A cursor drags the pieces through a famous short game. Moves are from-to squares.
+// The self-playing demo (/demo, key D, or ?demo=<name> in the URL, add &loop to
+// repeat). A drawn cursor drags pieces and clicks the panels. A script is a list
+// of steps: { move: 'e2e4' }, { click: '<css selector>', pause: seconds },
+// { wait: seconds }. A plain `moves` list is a script of moves only.
 export const DEMO = {
-  defaultGame: 'legal',
+  defaultGame: 'tour',
   games: {
+    tour: {
+      name: 'The tour: a few moves, the gallery, the colours',
+      steps: [
+        { move: 'e2e4' }, { move: 'd7d5' }, { move: 'e4d5' }, { move: 'd8d5' },
+        { click: '.fab-gallery', pause: 2.6 },
+        { click: '.gallery-bar .chip[data-type="knight"]', pause: 2.6 },
+        { click: '.gallery-bar .arrow[data-step="1"]', pause: 2.2 },
+        { click: '.gallery-bar .back', pause: 1.4 },
+        { click: '.fab-palette', pause: 1.0 },
+        { click: '[data-preset="Marble hall"]', pause: 1.6 },
+        { click: '[data-preset="Ember"]', pause: 1.6 },
+        { click: '.slot[data-slot="sky"]', pause: 0.8 },
+        { click: '.swatch[data-id="33"]', pause: 1.8 },
+        { click: '.palette .close', pause: 0.8 },
+        { move: 'b1c3' }
+      ]
+    },
     legal: {
       name: "Legal's mate, Paris 1750",
       moves: ['e2e4', 'e7e5', 'g1f3', 'd7d6', 'f1c4', 'c8g4', 'b1c3', 'g7g6', 'f3e5', 'g4d1', 'c4f7', 'e8e7', 'c3d5']
@@ -192,6 +235,7 @@ export const DEMO = {
   },
   startDelay: 2.2,        // seconds after the reset before the first move
   approachSeconds: 0.7,   // cursor travels to the piece
+  clickSeconds: 0.55,     // cursor travels to a button
   carrySeconds: 0.9,      // piece travels to its square
   betweenSeconds: 2.0,    // pause after a move (the camera glide takes 1.4)
   grabHeight: 0.7,        // where on the piece the cursor lands, in world units

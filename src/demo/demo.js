@@ -11,15 +11,16 @@ import { gsap } from 'gsap'
 import { DEMO, DRAG } from '../config.js'
 import { nameToSquare, squareToWorld, worldToSquare } from '../chess/coords.js'
 
-export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, settings }) {
+export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, settings, materials, palette }) {
   const cursor = document.querySelector('.demo-cursor')
   const ring = cursor.querySelector('.ring')
   const pos = { x: sizes.width * 0.5, y: sizes.height * 0.85 }   // where the drawn cursor is, in CSS pixels
   const projected = new THREE.Vector3()
   let token = 0                 // bumped to cancel a running demo
   let carrying = null           // the piece in the cursor's hand, if any
-  let restore = null            // settings to put back when the demo ends
+  let restore = null            // settings and colours to put back when the demo ends
   let loopGame = null           // name of the game to replay, or null
+  let current = null            // the step being played (for probes and debugging)
 
   const running = () => restore !== null
   const sleep = (seconds) => new Promise((resolve) => gsap.delayedCall(seconds, resolve))
@@ -80,11 +81,42 @@ export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, 
     return true
   }
 
+  /** Glide to a button and click it. Resolves false if nothing visible matches (the script opened things in the wrong order). */
+  async function clickOn(selector, my) {
+    const el = [...document.querySelectorAll(selector)].find((candidate) => candidate.getBoundingClientRect().width > 0)
+    if (!el) return false
+    const box = el.getBoundingClientRect()
+    await tween(pos, { x: box.left + box.width / 2, y: box.top + box.height / 2, duration: DEMO.clickSeconds, ease: 'power2.inOut', onUpdate: draw })
+    if (my !== token) return false
+    cursor.classList.add('down')
+    pulse()
+    el.click()
+    await sleep(0.15)
+    cursor.classList.remove('down')
+    dragControls.enabled = false                  // a mode switch turns dragging back on; not while the demo runs
+    return true
+  }
+
+  async function runStep(step, my) {
+    if (step.move) {
+      const ok = await playMove(step.move.slice(0, 2), step.move.slice(2, 4), my)
+      if (ok) await sleep(step.pause ?? DEMO.betweenSeconds)
+      return ok
+    }
+    if (step.click) {
+      const ok = await clickOn(step.click, my)
+      if (ok) await sleep(step.pause ?? 1)
+      return ok
+    }
+    if (step.wait) await sleep(step.wait)
+    return true
+  }
+
   async function start(name = DEMO.defaultGame) {
     const script = DEMO.games[name] || DEMO.games[DEMO.defaultGame]
     if (running()) stop()
     const my = ++token
-    restore = { opponent: settings.opponent, dragging: dragControls.enabled }
+    restore = { opponent: settings.opponent, dragging: dragControls.enabled, palette: materials.getPalette() }
     settings.opponent = 'off'                 // two hands, no computer
     game.reset()
     dragControls.enabled = false
@@ -94,12 +126,15 @@ export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, 
     draw()
 
     await sleep(DEMO.startDelay)
-    for (const move of script.moves) {
+    const steps = script.steps ?? script.moves.map((move) => ({ move }))
+    for (const step of steps) {
       if (my !== token) return
-      const ok = await playMove(move.slice(0, 2), move.slice(2, 4), my)
+      current = step
+      const ok = await runStep(step, my)
+      if (!ok) console.warn('demo: step could not be played', step)
       if (!ok || my !== token) break
-      await sleep(DEMO.betweenSeconds)
     }
+    current = null
     if (my !== token) return
     finish()
     if (loopGame) {
@@ -127,7 +162,13 @@ export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, 
     canvas.style.cursor = ''
     delete document.body.dataset.demo
     dragControls.enabled = restore?.dragging ?? settings.dragging
-    if (restore) settings.opponent = restore.opponent
+    if (restore) {
+      settings.opponent = restore.opponent
+      const now = materials.getPalette()
+      if (Object.keys(now).some((k) => now[k] !== restore.palette[k])) palette.apply(restore.palette)   // your colours, not the tour's
+      document.querySelector('.palette').hidden = true
+      document.querySelector('.fab-palette').classList.remove('active')
+    }
     restore = null
   }
 
@@ -150,5 +191,5 @@ export function createDemo({ pieces, camera, canvas, sizes, game, dragControls, 
     gsap.delayedCall(1.5, () => start(name))
   }
 
-  return { start, stop, running }
+  return { start, stop, running, current: () => current }
 }
