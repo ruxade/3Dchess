@@ -234,6 +234,10 @@ export const DEMO = {
         { move: 'b1c3' }
       ]
     },
+    bishop: {
+      name: "Greco's trap in Owen's Defence, 1619: a queen for a bishop mate",
+      moves: ['e2e4', 'b7b6', 'd2d4', 'c8b7', 'f1d3', 'f7f5', 'e4f5', 'b7g2', 'd1h5', 'g7g6', 'f5g6', 'g8f6', 'g6h7', 'f6h5', 'd3g6']
+    },
     legal: {
       name: "Legal's mate, Paris 1750",
       moves: ['e2e4', 'e7e5', 'g1f3', 'd7d6', 'f1c4', 'c8g4', 'b1c3', 'g7g6', 'f3e5', 'g4d1', 'c4f7', 'e8e7', 'c3d5']

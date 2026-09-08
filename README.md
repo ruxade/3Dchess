@@ -36,7 +36,7 @@ works fine with the current one.
 * G opens the gallery: each piece on a turntable with how it moves and where it came from, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.
 * ? shows the controls, H hides the settings panel, N starts a new game, double click for fullscreen.
-* `/demo` is the self-playing tour, looping: a cursor plays four moves with two captures, opens the gallery and browses two pieces, opens the colour panel and tries two presets and a sky, then plays on. About 45 seconds; your colours come back when it ends. Any click or key takes the board back. On the game page, D starts the tour once; `?demo=legal` plays Legal's mate to checkmate, `?demo=opera` Morphy's Opera Game.
+* `/demo` is the self-playing tour, looping: a cursor plays four moves with two captures, opens the gallery and browses two pieces, opens the colour panel and tries two presets and a sky, then plays on. About 45 seconds; your colours come back when it ends. Any click or key takes the board back. On the game page, D starts the tour once; `?demo=bishop` plays Greco's Owen's Defence trap (a queen given up, the bishop mates on move 8), `?demo=legal` Legal's mate, `?demo=opera` Morphy's Opera Game.
 
 ## Code layout
 
