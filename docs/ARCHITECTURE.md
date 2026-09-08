@@ -33,7 +33,7 @@ and the job is in the first comment of the file.
 | `src/core/renderer.js` | WebGLRenderer, post-processing passes (outline, bloom). | Add a visual effect (blur, colour grading) |
 | `src/scene/materials.js` | One matcap material per recolourable slot, setMatcap(). | Change how surfaces look |
 | `src/scene/board.js` | Plate, 64 squares, grid lines. | Change the board |
-| `src/scene/environment.js` | Sky sphere, fog. | Change the mood, the background |
+| `src/scene/environment.js` | Sky sphere, fog, the game-over tint. | Change the mood, the background |
 | `src/scene/pieces.js` | Load FBX models, place 32 pieces. | Change models, starting layout |
 | `src/scene/gallery.js` | Gallery scene: one piece on a pedestal, own camera and orbit. | Change the gallery look |
 | `src/scene/victory.js` | Victory scene: the winner's pawn spinning, puffs. | Change the celebration |
@@ -209,6 +209,13 @@ only partly so the piece still clears its neighbours; the re-shove for a piece
 that dozes off on the board uses at least 0.7. Turn physics off (Settings,
 Game) and captures glide to a graveyard beside the board instead, the
 pre-physics behaviour.
+
+**The end of a game.** `endGame(winner)` runs on checkmate, flag or draw:
+`physics.topple()` turns the loser's king dynamic with a nudge and a spin so it
+falls forward on its square (its `toppled` flag exempts it from the off-board
+re-shove), and `environment.setTint()` fades a colour over the sky matcap, the
+plate and the fog (`GAME_OVER.tints`). `standUp()` on undo, load and new game
+puts the king back and lifts the tint. A restored finished game does both at once.
 
 **Victory screen.** Checkmate schedules `celebrate()` after `VICTORY.delaySeconds`
 (so the mating move lands and the knock settles); a flag calls it sooner. Undo,

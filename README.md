@@ -31,7 +31,7 @@ works fine with the current one.
 * Chess clock: Settings, Game, "clock" (1+0 to 15+10). Run out of time and the game is over.
 * The game is saved after every move. Close the tab, come back, carry on.
 * A pawn on the last rank asks what it becomes.
-* Checkmate or a flag brings up the victory screen: the winner's pawn on a turntable. New game, or back to the board to look at the position.
+* Checkmate or a flag: the losing king topples on its square, the sky turns amber or indigo for the winner (grey for a draw), then the victory screen brings the winner's pawn on a turntable. New game, or back to the board to look at the position.
 * Settings, Game, "knock strength" tames or unleashes the captures; "shatter sound" picks the break (it plays once when you change it).
 * G opens the gallery: each piece on a turntable with how it moves and where it came from, orbit it yourself, left and right arrows to browse.
 * P opens the colour panel: pick a surface, pick a matcap, or apply a preset. Your choice is remembered.

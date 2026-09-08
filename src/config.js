@@ -93,6 +93,18 @@ export const GALLERY = {
   first: 'queen'
 }
 
+// When a game ends: the loser's king topples and the world changes colour.
+// Tints multiply the sky, fog and plate (white = untouched); they lift on a new game.
+export const GAME_OVER = {
+  tints: {
+    light: 0xffd0a0,    // white wins: warm amber evening
+    dark: 0x8d86cc,     // black wins: cool indigo night
+    draw: 0xb3aebb      // stalemate or draw: grey
+  },
+  tintSeconds: 1.6,
+  topplePush: 1.5       // impulse at the top of the king, sideways: tips it over, lands about a square on
+}
+
 // The victory screen: the winner's pawn on a turntable, after a checkmate or a flag.
 export const VICTORY = {
   delaySeconds: 1.8,     // let the mating move land and the knock settle first

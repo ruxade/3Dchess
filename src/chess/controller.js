@@ -11,7 +11,7 @@
 
 import * as THREE from 'three'
 import { gsap } from 'gsap'
-import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, CAPTURE_STYLES, SHATTER, GAME_STORAGE_KEY } from '../config.js'
+import { CAMERA, DRAG, GRAVEYARD, HOVER, EFFECTS, CLOCK, OPPONENT, VICTORY, CAPTURE_STYLES, SHATTER, GAME_OVER, GAME_STORAGE_KEY } from '../config.js'
 import { nameToSquare, squareName, squareToWorld } from './coords.js'
 import { createClock } from './clock.js'
 import { createPieceSet } from '../scene/pieces.js'
@@ -30,7 +30,7 @@ export function applySavedSettings(settings) {
 
 export function createGameController({
   rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
-  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline, celebrate, shatter
+  camera, settings, opponent, movesUi, promotionUi, clocksUi, outline, celebrate, shatter, environment
 }) {
   const bySquare = new Map()                 // 'e2' -> mesh
   const captured = { light: 0, dark: 0 }     // graveyard slots used (physics off)
@@ -39,6 +39,7 @@ export function createGameController({
   let lastPuff = 0
   let clock = null                           // the chess clock, or null when off
   let celebration = null                     // the delayed call that opens the victory screen
+  let fallenKing = null                      // the loser's king, lying on its square, until a new game
 
   const worldOf = (square) => { const { col, row } = nameToSquare(square); return squareToWorld(col, row) }
   const computerColour = () => (settings.humanColour === 'light' ? 'dark' : 'light')
@@ -83,6 +84,7 @@ export function createGameController({
     refresh()
     persist()
     if (state.gameOver) {
+      endGame(state.checkmate ? other(state.turn) : null)
       if (state.checkmate) scheduleCelebration(other(state.turn), 'checkmate')
       return
     }
@@ -334,6 +336,31 @@ export function createGameController({
     refresh()
   }
 
+  // ---- the end of a game ---------------------------------------------------
+
+  /** The loser's king topples and the world changes colour. `winner` null means a draw. `instant` for a restored game. */
+  function endGame(winner, instant = false) {
+    environment.setTint(GAME_OVER.tints[winner ?? 'draw'], instant ? 0 : GAME_OVER.tintSeconds)
+    if (!winner || fallenKing) return
+    const king = pieces.children.find((p) => p.userData.type === 'king' && p.userData.colour === other(winner) && !p.userData.captured)
+    if (!king) return
+    fallenKing = king
+    const towardsCentre = king.userData.row < 3.5 ? 1 : -1         // it falls forward, towards the winner
+    physics.topple(king, new THREE.Vector3((Math.random() - 0.5) * 0.4, 0, towardsCentre).normalize())
+  }
+
+  /** New game, undo or load: the king stands up and the colours come back. */
+  function standUp() {
+    environment.clearTint(0.8)
+    if (!fallenKing) return
+    const king = fallenKing
+    fallenKing = null
+    if (king.userData.captured || !pieces.children.includes(king)) return
+    king.rotation.set(0, king.userData.colour === 'dark' ? Math.PI : 0, 0)
+    king.position.set(king.userData.x, 0, king.userData.z)
+    physics.restore(king)
+  }
+
   // ---- commands -----------------------------------------------------------
 
   function undo() {
@@ -345,6 +372,7 @@ export function createGameController({
     if (computerOn() && rules.turn() !== settings.humanColour) rules.undo()
     highlights.clear()
     select(null)
+    standUp()
     syncFromRules()
     clock?.switchTo(rules.turn())                           // no time is refunded
     persist()
@@ -361,6 +389,8 @@ export function createGameController({
     highlights.clear()
     select(null)
     clock?.reset()
+    fallenKing = null                                       // the meshes are about to be replaced
+    environment.clearTint(0.8)
     gsap.killTweensOf(pieces.children.map((p) => p.position))
     shatter.clear()
     physics.clear()
@@ -383,6 +413,7 @@ export function createGameController({
     rules.load(fen)
     highlights.clear()
     clock?.reset()
+    standUp()
     syncFromRules()
     persist()
     if (computerOn() && rules.turn() === computerColour() && !gameOver()) computerMove()
@@ -410,6 +441,7 @@ export function createGameController({
     thinking++
     refresh()
     persist()
+    endGame(other(colour))
     scheduleCelebration(other(colour), 'time', 0.8)
   }
 
@@ -448,6 +480,9 @@ export function createGameController({
     if (!saved?.pgn || !rules.loadPgn(saved.pgn)) return false
     syncFromRules(true, Array.isArray(saved.fallen) ? [...saved.fallen] : [])
     if (clock && saved.clock) clock.setRemaining(saved.clock)   // it waits for the next move to run
+    const state = rules.status()
+    if (clock?.flagged()) endGame(other(clock.flagged()), true)
+    else if (state.gameOver) endGame(state.checkmate ? other(state.turn) : null, true)
     return true
   }
 

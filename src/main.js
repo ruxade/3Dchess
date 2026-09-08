@@ -53,8 +53,7 @@ const loading = createLoading(scene)                        // progress bar + fa
 const textureLoader = new THREE.TextureLoader(loading.manager)
 const materials = createMaterials(textureLoader, loadSavedPalette())   // remembers your colours
 
-createEnvironment(scene, materials)                         // sky sphere + fog
-materials.onSky((colour) => scene.fog.color.copy(colour))   // fog always matches the sky
+const environment = createEnvironment(scene, materials)     // sky sphere + fog, tinted when a game ends
 scene.add(createBoard(materials))                           // plate + 64 squares + grid
 
 const pieces = new THREE.Group()                            // filled once models load
@@ -109,7 +108,7 @@ loadPieceGeometries(loading.manager)
     const game = createGameController({
       rules, pieces, geometries, materials, highlights, status, dragControls, physics, sound, effects,
       camera: mainCamera, settings, opponent, movesUi, promotionUi, clocksUi, outline: passes.outline,
-      celebrate: victoryUi.celebrate, shatter
+      celebrate: victoryUi.celebrate, shatter, environment
     })
     dragControls.setHandlers(game)                          // drag asks the game what is allowed
     hooks.undo = game.undo

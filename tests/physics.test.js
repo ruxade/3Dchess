@@ -71,6 +71,18 @@ describe('physics', () => {
     expect(Math.hypot(victim.position.x, victim.position.z)).toBeLessThan(11)
   })
 
+  it('a toppled king falls over on its square and is left lying there', () => {
+    const physics = createPhysics()
+    const king = piece(0.5, -3.5)          // e1
+    physics.addPiece(king)
+    physics.topple(king, new THREE.Vector3(0, 0, 1))
+    simulate(physics, 6)
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(king.quaternion)
+    expect(up.y).toBeLessThan(0.5)                                             // tipped well past 60 degrees
+    expect(Math.abs(king.position.x) < 4 && Math.abs(king.position.z) < 4).toBe(true)   // still on the board, no re-shove
+    expect(king.position.y).toBeGreaterThan(-0.2)                              // lying on the board top, not fallen off
+  })
+
   it('follow() puts the body centre above the base of a piece lying on its side', () => {
     const physics = createPhysics()
     const pawn = piece(6, 1)

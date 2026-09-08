@@ -8,7 +8,7 @@
 
 import * as CANNON from 'cannon-es'
 import * as THREE from 'three'
-import { BOARD, PHYSICS } from '../config.js'
+import { BOARD, PHYSICS, GAME_OVER } from '../config.js'
 
 export function createPhysics() {
   const world = new CANNON.World({ gravity: new CANNON.Vec3(0, PHYSICS.gravity, 0) })
@@ -31,7 +31,7 @@ export function createPhysics() {
   world.addBody(board)
   world.addBody(floor)
 
-  const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength, centred }
+  const entries = new Map()          // mesh -> { body, halfHeight, dynamic, strength, centred, toppled }
   const impactListeners = new Set()
   const restListeners = new Set()    // a knocked piece has come to rest off the board
   const up = new THREE.Vector3(0, 1, 0)
@@ -49,14 +49,14 @@ export function createPhysics() {
   function addPiece(mesh) {
     const { shape, halfHeight } = shapeFor(mesh)
     const body = new CANNON.Body({ type: CANNON.Body.STATIC, shape })
-    const entry = { body, halfHeight, dynamic: false, strength: 1, centred: false }
+    const entry = { body, halfHeight, dynamic: false, strength: 1, centred: false, toppled: false }
     entries.set(mesh, entry)
     follow(mesh)
     world.addBody(body)
     reportImpacts(mesh, body)
     // A knocked piece that dozes off while still on the board gets one more shove.
     body.addEventListener('sleep', () => {
-      if (!entry.dynamic) return
+      if (!entry.dynamic || entry.toppled) return   // a fallen king lies where it fell
       const onBoard = Math.abs(body.position.x) < half + 0.4 && Math.abs(body.position.z) < half + 0.4 && body.position.y > -0.5
       if (onBoard) {
         body.wakeUp()
@@ -160,7 +160,29 @@ export function createPhysics() {
     entry.dynamic = true
   }
 
-  /** A knocked piece is put back into play: static again, following its mesh. */
+  /**
+   * Tip a standing piece over where it stands (the loser's king): dynamic, then
+   * a push at its top along `direction`, the way a finger would, so it falls
+   * on its side and stays on the board.
+   */
+  function topple(mesh, direction, push = GAME_OVER.topplePush) {
+    const entry = entries.get(mesh)
+    if (!entry) return
+    follow(mesh)
+    const { body, halfHeight } = entry
+    body.type = CANNON.Body.DYNAMIC
+    body.mass = 1
+    body.updateMassProperties()
+    body.linearDamping = 0.2
+    body.angularDamping = 0.2
+    const top = new CANNON.Vec3(body.position.x, body.position.y + halfHeight, body.position.z)
+    body.applyImpulse(new CANNON.Vec3(direction.x * push, 0, direction.z * push), top)
+    body.wakeUp()
+    entry.dynamic = true
+    entry.toppled = true
+  }
+
+  /** A knocked or toppled piece is put back into play: static again, following its mesh. */
   function restore(mesh) {
     const entry = entries.get(mesh)
     if (!entry) return
@@ -171,6 +193,7 @@ export function createPhysics() {
     body.velocity.setZero()
     body.angularVelocity.setZero()
     entry.dynamic = false
+    entry.toppled = false
     follow(mesh)
   }
 
@@ -215,5 +238,5 @@ export function createPhysics() {
     return () => restListeners.delete(fn)
   }
 
-  return { world, entries, addPiece, addFragment, park, follow, knock, restore, reshape, remove, clear, step, onImpact, onRest }
+  return { world, entries, addPiece, addFragment, park, follow, knock, topple, restore, reshape, remove, clear, step, onImpact, onRest }
 }
